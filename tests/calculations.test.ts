@@ -27,6 +27,18 @@ describe("calculations", () => {
     expect(slices.tarif2).toBe(3);
   });
 
+  it("uses slice start for night tariff", () => {
+    const slices = calculateTimeSlices("21:15", "22:15", "2025-05-10");
+    expect(slices.tarif1).toBe(2);
+    expect(slices.tarif2).toBe(0);
+  });
+
+  it("uses slice start for Sunday tariff", () => {
+    const slices = calculateTimeSlices("10:00", "10:30", "2025-05-11");
+    expect(slices.tarif1).toBe(0);
+    expect(slices.tarif2).toBe(1);
+  });
+
   it("calculates personnel costs", () => {
     const result = calculateEntryCosts(
       "Personal",

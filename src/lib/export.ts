@@ -46,8 +46,8 @@ export function buildCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]): str
   ]);
   lines.push("");
   pushLine(["Allgemeine Einsatzzeit"]);
-  pushLine(["Von", metadaten.allgemeineEinsatzzeit.von]);
-  pushLine(["Bis", metadaten.allgemeineEinsatzzeit.bis]);
+  pushLine(["Von", formatLocalDateTime(metadaten.allgemeineEinsatzzeit.von)]);
+  pushLine(["Bis", formatLocalDateTime(metadaten.allgemeineEinsatzzeit.bis)]);
   pushLine([
     "Eingesetzte Bedienstete",
     metadaten.allgemeineEinsatzzeit.eingesetzteBedienstete
@@ -86,9 +86,9 @@ export function buildCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]): str
       entry.bezeichnung,
       entry.artDerKraefte,
       entry.anzahl,
-      entry.datum,
-      entry.beginn,
-      entry.ende,
+      formatLocalDate(entry.datum),
+      formatLocalTime(entry.beginn),
+      formatLocalTime(entry.ende),
       entry.zeitscheibenTarif1,
       entry.zeitscheibenTarif2,
       formatCurrency(entry.gesamtkosten)
@@ -231,8 +231,8 @@ export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintra
       entry.artDerKraefte,
       String(entry.anzahl),
       formatLocalDate(entry.datum),
-      entry.beginn,
-      entry.ende,
+      formatLocalTime(entry.beginn),
+      formatLocalTime(entry.ende),
       String(entry.zeitscheibenTarif1),
       String(entry.zeitscheibenTarif2),
       formatCurrency(entry.gesamtkosten)
@@ -246,10 +246,7 @@ export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintra
   const finalY = docWithTable.lastAutoTable?.finalY ?? cursor + 60;
   doc.text(`Summe verrechenbar (SGV): ${formatCurrency(total)}`, 14, finalY + 8);
   doc.text(
-    `Exportdatum: ${new Date().toLocaleString("de-AT", {
-      dateStyle: "short",
-      timeStyle: "short"
-    })}`,
+    `Exportdatum: ${formatNowDateTime()}`,
     200,
     finalY + 8
   );
@@ -275,7 +272,11 @@ function formatLocalDate(value: string): string {
   if (!parsed) {
     return value;
   }
-  return parsed.toLocaleDateString("de-AT");
+  return parsed.toLocaleDateString("de-AT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
 }
 
 function formatLocalDateTime(value: string): string {
@@ -283,10 +284,38 @@ function formatLocalDateTime(value: string): string {
   if (!parsed) {
     return value;
   }
-  return `${parsed.toLocaleDateString("de-AT")} ${parsed.toLocaleTimeString("de-AT", {
+  return `${parsed.toLocaleDateString("de-AT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  })} ${parsed.toLocaleTimeString("de-AT", {
     hour: "2-digit",
     minute: "2-digit"
   })}`;
+}
+
+function formatLocalTime(value: string): string {
+  const minutes = parseTimeToMinutes(value);
+  if (minutes === null) {
+    return value;
+  }
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+}
+
+function formatNowDateTime(): string {
+  const now = new Date();
+  const date = now.toLocaleDateString("de-AT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+  const time = now.toLocaleTimeString("de-AT", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+  return `${date} ${time}`;
 }
 
 function buildEntryDetailRows(
@@ -318,7 +347,7 @@ function buildSliceRows(entry: EinsatzEintrag, tarife: Metadaten["tarife"]): Arr
     const sliceEnd = new Date(baseDate.getTime());
     sliceEnd.setMinutes(sliceEnd.getMinutes() + startMinutes + Math.min((i + 1) * 30, duration));
 
-    const tarif2Active = isTarif2(sliceStart, sliceEnd);
+    const tarif2Active = isTarif2(sliceStart);
     const tarifLabel = tarif2Active ? "T2" : "T1";
     const satz =
       entry.artDerKraefte === "Dienstkraftfahrzeug"
@@ -384,7 +413,11 @@ function buildMinuteRows(entry: EinsatzEintrag, tarife: Metadaten["tarife"]): Ar
 }
 
 function formatDateOnly(value: Date): string {
-  return value.toLocaleDateString("de-AT");
+  return value.toLocaleDateString("de-AT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
 }
 
 function formatTimeOnly(value: Date): string {

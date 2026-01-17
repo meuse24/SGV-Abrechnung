@@ -90,7 +90,7 @@ export function calculateTimeSlices(start: string, end: string, date: string): {
       sliceEnd.getMinutes() + startMinutes + Math.min((i + 1) * 30, duration)
     );
 
-    if (isTarif2(sliceStart, sliceEnd)) {
+    if (isTarif2(sliceStart)) {
       tarif2 += 1;
     } else {
       tarif1 += 1;
@@ -100,40 +100,23 @@ export function calculateTimeSlices(start: string, end: string, date: string): {
   return { tarif1, tarif2, totalMinutes: duration };
 }
 
-export function isTarif2(sliceStart: Date, sliceEnd: Date): boolean {
-  const endMinusMinute = new Date(sliceEnd.getTime() - 60 * 1000);
-  if (isSundayOrHoliday(sliceStart) || isSundayOrHoliday(endMinusMinute)) {
+export function isTarif2(sliceStart: Date): boolean {
+  if (isSundayOrHoliday(sliceStart)) {
     return true;
   }
 
   const startMinutes = sliceStart.getHours() * 60 + sliceStart.getMinutes();
-  const endMinutes = sliceEnd.getHours() * 60 + sliceEnd.getMinutes();
-  const crossesMidnight = sliceStart.getDate() !== sliceEnd.getDate();
-
-  if (crossesMidnight) {
-    return (
-      overlapsNightRange(startMinutes, 1440) || overlapsNightRange(0, endMinutes)
-    );
-  }
-
-  return overlapsNightRange(startMinutes, endMinutes);
+  return isNightStartMinute(startMinutes);
 }
 
 export function isSundayOrHoliday(date: Date): boolean {
   return date.getDay() === 0 || isHoliday(date);
 }
 
-function overlapsNightRange(segmentStart: number, segmentEnd: number): boolean {
+function isNightStartMinute(minutes: number): boolean {
   const nightStart = TARIF_2_ZEITRAUM.START * 60;
   const nightEnd = TARIF_2_ZEITRAUM.ENDE * 60;
-  return (
-    rangesOverlap(segmentStart, segmentEnd, nightStart, 1440) ||
-    rangesOverlap(segmentStart, segmentEnd, 0, nightEnd)
-  );
-}
-
-function rangesOverlap(aStart: number, aEnd: number, bStart: number, bEnd: number): boolean {
-  return aStart < bEnd && aEnd > bStart;
+  return minutes >= nightStart || minutes < nightEnd;
 }
 
 export function calculateEntryCosts(

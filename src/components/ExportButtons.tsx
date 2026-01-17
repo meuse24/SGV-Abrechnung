@@ -212,6 +212,16 @@ export default function ExportButtons({
                   <li>JSON f&uuml;r sp&auml;teres Laden speichern</li>
                 </ul>
               </div>
+              <div className="info-block">
+                <h3>5) Tarifberechnung</h3>
+                <ul className="help-list">
+                  <li>Abgerechnet wird in 30-Minuten-Schritten: jede begonnene Halbstunde z&auml;hlt.</li>
+                  <li>Ma&szlig;geblich ist immer der Beginn der Halbstunde (nicht das Ende).</li>
+                  <li>Tarif 2 gilt, wenn die Halbstunde zwischen 22:00 und 06:00 beginnt.</li>
+                  <li>Tarif 2 gilt auch, wenn die Halbstunde an einem Sonn- oder Feiertag beginnt.</li>
+                  <li>Beispiel (Werktag): 21:15-22:15 = zwei Halbstunden Tarif 1.</li>
+                </ul>
+              </div>
             </div>
 
             <div className="info-footer">

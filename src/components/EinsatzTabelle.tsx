@@ -1,5 +1,6 @@
 ﻿import { Pencil, Trash2 } from "lucide-react";
 import type { EinsatzEintrag } from "../types/einsatz";
+import { parseLocalDate, parseTimeToMinutes } from "../lib/calculations";
 import { formatCurrency } from "../lib/utils";
 
 interface EinsatzTabelleProps {
@@ -33,6 +34,39 @@ export default function EinsatzTabelle({
   onSortChange,
   summary
 }: EinsatzTabelleProps) {
+  const formatDate = (value: string) => {
+    const parsed = parseLocalDate(value);
+    if (!parsed) {
+      return value;
+    }
+    return parsed.toLocaleDateString("de-AT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+  };
+  const formatTime = (value: string) => {
+    const minutes = parseTimeToMinutes(value);
+    if (minutes === null) {
+      return value;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+  };
+  const formatDateTime = (value: Date) => {
+    const date = value.toLocaleDateString("de-AT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+    const time = value.toLocaleTimeString("de-AT", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    return `${date} ${time}`;
+  };
+
   const ariaSortFor = (key: keyof EinsatzEintrag) => {
     if (sort.key !== key) {
       return "none";
@@ -117,9 +151,9 @@ export default function EinsatzTabelle({
                     </span>
                   </td>
                   <td>{entry.anzahl}</td>
-                  <td>{entry.datum}</td>
-                  <td>{entry.beginn}</td>
-                  <td>{entry.ende}</td>
+                  <td>{formatDate(entry.datum)}</td>
+                  <td>{formatTime(entry.beginn)}</td>
+                  <td>{formatTime(entry.ende)}</td>
                   <td>{entry.zeitscheibenTarif1}</td>
                   <td>
                     {entry.zeitscheibenTarif2 > 0 ? (
@@ -186,15 +220,15 @@ export default function EinsatzTabelle({
               </div>
               <div className="mobile-card-row">
                 <span>Datum</span>
-                <span>{entry.datum}</span>
+                <span>{formatDate(entry.datum)}</span>
               </div>
               <div className="mobile-card-row">
                 <span>Beginn</span>
-                <span>{entry.beginn}</span>
+                <span>{formatTime(entry.beginn)}</span>
               </div>
               <div className="mobile-card-row">
                 <span>Ende</span>
-                <span>{entry.ende}</span>
+                <span>{formatTime(entry.ende)}</span>
               </div>
               <div className="mobile-card-row">
                 <span>Anzahl</span>
@@ -262,10 +296,7 @@ export default function EinsatzTabelle({
         <div>
           Spitzenbelegung Personal:{" "}
           {summary.peakPersonal.count > 0 && summary.peakPersonal.time
-            ? `${summary.peakPersonal.count} am ${summary.peakPersonal.time.toLocaleString("de-AT", {
-                dateStyle: "short",
-                timeStyle: "short"
-              })}`
+            ? `${summary.peakPersonal.count} am ${formatDateTime(summary.peakPersonal.time)}`
             : "—"}
         </div>
       </div>

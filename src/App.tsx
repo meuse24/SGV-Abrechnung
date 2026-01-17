@@ -196,6 +196,40 @@ export default function App() {
     setDialogOpen(false);
   };
 
+  const prefillFromEinsatzzeit = useMemo<Partial<EinsatzFormValues>>(() => {
+    const prefill: Partial<EinsatzFormValues> = {};
+    const von = metadaten.allgemeineEinsatzzeit.von;
+    if (von && von.includes("T")) {
+      const [datum, beginn] = von.split("T");
+      if (datum) {
+        prefill.datum = datum;
+      }
+      if (beginn) {
+        prefill.beginn = beginn;
+      }
+    }
+    const bis = metadaten.allgemeineEinsatzzeit.bis;
+    if (bis && bis.includes("T")) {
+      const [, ende] = bis.split("T");
+      if (ende) {
+        prefill.ende = ende;
+      }
+    }
+    return prefill;
+  }, [metadaten.allgemeineEinsatzzeit.von, metadaten.allgemeineEinsatzzeit.bis]);
+
+  const initialFormValue = useMemo(() => {
+    if (editing) {
+      return editing;
+    }
+    return {
+      ...draft,
+      datum: draft.datum || prefillFromEinsatzzeit.datum || "",
+      beginn: draft.beginn || prefillFromEinsatzzeit.beginn || "",
+      ende: draft.ende || prefillFromEinsatzzeit.ende || ""
+    };
+  }, [draft, editing, prefillFromEinsatzzeit]);
+
   return (
     <main>
       <div className="top-actions">
@@ -218,7 +252,7 @@ export default function App() {
           <div className="modal-card">
             <EinsatzFormular
               tarife={metadaten.tarife}
-              initialValue={editing ?? draft}
+              initialValue={initialFormValue}
               onSubmit={handleSubmit}
               onDraftChange={setDraft}
               isEditing={Boolean(editing)}
