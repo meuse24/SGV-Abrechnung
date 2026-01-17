@@ -1,4 +1,5 @@
 ﻿import { useMemo, useState } from "react";
+import { z } from "zod";
 import Header from "./components/Header";
 import MetadatenFormular from "./components/MetadatenFormular";
 import EinsatzFormular, { type EinsatzFormValues } from "./components/EinsatzFormular";
@@ -9,6 +10,44 @@ import { calculateEntryCosts, calculatePeakPersonal } from "./lib/calculations";
 import type { EinsatzEintrag } from "./types/einsatz";
 
 const EMPTY_DRAFT: Partial<EinsatzFormValues> = createDefaultDraft();
+const ART_DER_KRAEFTE = ["Personal", "Dienstkraftfahrzeug", "Luftfahrzeug"] as const;
+const importSchema = z.object({
+  metadaten: z.object({
+    dienststelle: z.string(),
+    veranstaltung: z.string(),
+    vereinVeranstalter: z.string(),
+    bescheidZahl: z.string().optional(),
+    padZahl: z.string().optional(),
+    tarife: z.object({
+      personalTarif1: z.number().finite(),
+      personalTarif2: z.number().finite(),
+      dienstfahrzeug: z.number().finite(),
+      luftfahrzeugProMinute: z.number().finite(),
+      durchschnStundensatz: z.number().finite()
+    }),
+    allgemeineEinsatzzeit: z.object({
+      von: z.string(),
+      bis: z.string(),
+      eingesetzteBedienstete: z.number().finite()
+    })
+  }),
+  eintraege: z.array(
+    z.object({
+      id: z.string(),
+      bezeichnung: z.string(),
+      artDerKraefte: z.enum(ART_DER_KRAEFTE),
+      anzahl: z.number().finite(),
+      datum: z.string(),
+      beginn: z.string(),
+      ende: z.string(),
+      zeitscheibenTarif1: z.number().finite().optional().default(0),
+      zeitscheibenTarif2: z.number().finite().optional().default(0),
+      gesamtkosten: z.number().finite().optional().default(0),
+      erstelltAm: z.string(),
+      bearbeitetAm: z.string().optional()
+    })
+  )
+});
 
 export default function App() {
   const {
@@ -217,8 +256,4 @@ export default function App() {
       />
     </main>
   );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }

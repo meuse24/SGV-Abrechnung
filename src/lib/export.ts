@@ -10,14 +10,18 @@ import {
 import type { EinsatzEintrag, Metadaten } from "../types/einsatz";
 import { formatCurrency, formatNumber } from "./utils";
 
-function sanitize(value: string) {
-  return value.replace(/;/g, ",");
+function sanitize(value: string | number) {
+  const text = String(value).replace(/;/g, ",");
+  if (typeof value === "string" && /^\s*[=+\-@]/.test(text)) {
+    return `'${text}`;
+  }
+  return text;
 }
 
 export function buildCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]): string {
   const lines: string[] = [];
-  const pushLine = (values: Array<string | number>) => {
-    lines.push(values.map((value) => sanitize(String(value))).join(";"));
+  const pushLine = (values: Array<string | number | null | undefined>) => {
+    lines.push(values.map((value) => sanitize(value ?? "")).join(";"));
   };
 
   pushLine(["Dienststelle", metadaten.dienststelle]);
@@ -99,8 +103,8 @@ export function buildCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]): str
 
 export function buildDetailCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]): string {
   const lines: string[] = [];
-  const pushLine = (values: Array<string | number>) => {
-    lines.push(values.map((value) => sanitize(String(value))).join(";"));
+  const pushLine = (values: Array<string | number | null | undefined>) => {
+    lines.push(values.map((value) => sanitize(value ?? "")).join(";"));
   };
 
   pushLine(["Detailauswertung (Zeitscheiben)"]);
@@ -261,7 +265,9 @@ function triggerDownload(blob: Blob, filename: string) {
   document.body.appendChild(link);
   link.click();
   link.remove();
-  window.URL.revokeObjectURL(url);
+  window.setTimeout(() => {
+    window.URL.revokeObjectURL(url);
+  }, 1000);
 }
 
 function formatLocalDate(value: string): string {
