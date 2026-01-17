@@ -42,3 +42,8 @@
 ## Deployment Notes
 - Vite is configured with `base: "./"` for relative asset paths.
 - Upload the **contents** of `dist/` to your webspace (not the folder itself).
+
+## GitHub Metadata
+- Repo: `https://github.com/meuse24/SGV-Abrechnung.git`
+- Description: `Webapp zur Erfassung und Berechnung von Sicherheitsgebühren (SGV) mit CSV/PDF/JSON-Export, Detailauswertung und lokalem Browser-Speicher.`
+- Topics: `react, vite, typescript, sgv, fee-calculation, csv-export, pdf-export, localstorage, form, police`
