@@ -7,9 +7,19 @@ import { formatCurrency, formatNumber } from "../lib/utils";
 interface MetadatenFormularProps {
   metadaten: Metadaten;
   onChange: (next: Metadaten) => void;
+  onReloadTarife?: () => void;
+  tarifeStatus?: {
+    state: "idle" | "loading" | "success" | "error";
+    message?: string;
+  };
 }
 
-export default function MetadatenFormular({ metadaten, onChange }: MetadatenFormularProps) {
+export default function MetadatenFormular({
+  metadaten,
+  onChange,
+  onReloadTarife,
+  tarifeStatus
+}: MetadatenFormularProps) {
   const einsatzstunden = calculateEinsatzstunden(
     metadaten.allgemeineEinsatzzeit.von,
     metadaten.allgemeineEinsatzzeit.bis
@@ -58,7 +68,21 @@ export default function MetadatenFormular({ metadaten, onChange }: MetadatenForm
 
   return (
     <section className="card metadata-card">
-      <h2>Metadaten</h2>
+      <div className="section-header">
+        <h2>Einsatzdaten</h2>
+        {onReloadTarife ? (
+          <div className="section-actions">
+            <button type="button" className="ghost small-button" onClick={onReloadTarife}>
+              Tarife neu laden
+            </button>
+            {tarifeStatus && tarifeStatus.state !== "idle" ? (
+              <small className={`status-text status-${tarifeStatus.state}`}>
+                {tarifeStatus.message}
+              </small>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
       <div className="metadata-row metadata-row-1">
         <div>
           <label htmlFor="dienststelle">Dienststelle</label>

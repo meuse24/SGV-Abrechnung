@@ -20,7 +20,9 @@ export default function App() {
     deleteEintrag,
     clearEintraege,
     draft,
-    setDraft
+    setDraft,
+    loadTarifeFromJson,
+    tarifeStatus
   } = useEinsatzState();
   const [editing, setEditing] = useState<EinsatzEintrag | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -137,7 +139,7 @@ export default function App() {
       window.alert("JSON enth\u00e4lt keine g\u00fcltigen Formulardaten.");
       return;
     }
-    setMetadaten(metadatenData as typeof metadaten);
+    setMetadaten(metadatenData as unknown as typeof metadaten);
     setEintraege(eintraegeData as EinsatzEintrag[]);
     setDraft(EMPTY_DRAFT);
     setEditing(null);
@@ -171,7 +173,12 @@ export default function App() {
         />
       </div>
       <Header />
-      <MetadatenFormular metadaten={metadaten} onChange={setMetadaten} />
+      <MetadatenFormular
+        metadaten={metadaten}
+        onChange={setMetadaten}
+        onReloadTarife={loadTarifeFromJson}
+        tarifeStatus={tarifeStatus}
+      />
       {dialogOpen ? (
         <div className="modal-backdrop" role="dialog" aria-modal="true">
           <div className="modal-card">

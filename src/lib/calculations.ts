@@ -45,7 +45,7 @@ export function parseLocalDateTime(value: string): Date | null {
   if (!value || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
     return null;
   }
-  const [datePart, timePart] = value.split("T");
+  const [datePart = "", timePart = ""] = value.split("T");
   const date = parseLocalDate(datePart);
   const minutes = parseTimeToMinutes(timePart);
   if (!date || minutes === null) {
@@ -196,7 +196,7 @@ export function calculatePeakPersonal(
     if (!start || !end || entry.anzahl <= 0) {
       return;
     }
-    let startMs = start.getTime();
+    const startMs = start.getTime();
     let endMs = end.getTime();
     if (endMs <= startMs) {
       endMs += 24 * 60 * 60 * 1000;

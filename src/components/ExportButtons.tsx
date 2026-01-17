@@ -1,7 +1,7 @@
 ﻿import { useRef, useState, type ChangeEvent } from "react";
 import { Menu } from "lucide-react";
 import type { EinsatzEintrag, Metadaten } from "../types/einsatz";
-import { downloadCsv, downloadJson, downloadPdf } from "../lib/export";
+import { downloadCsv, downloadDetailCsv, downloadJson, downloadPdf } from "../lib/export";
 
 interface ExportButtonsProps {
   metadaten: Metadaten;
@@ -79,6 +79,12 @@ export default function ExportButtons({
           </button>
           <button type="button" onClick={() => handleExport(() => downloadCsv(metadaten, eintraege))}>
             CSV Export
+          </button>
+          <button
+            type="button"
+            onClick={() => handleExport(() => downloadDetailCsv(metadaten, eintraege))}
+          >
+            Detail Auswertung
           </button>
           <button type="button" onClick={() => handleExport(() => downloadPdf(metadaten, eintraege))}>
             PDF erstellen

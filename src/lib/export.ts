@@ -1,7 +1,10 @@
-﻿import {
+import {
+  calculateDurationMinutes,
   calculateEinsatzstunden,
+  isTarif2,
   parseLocalDate,
   parseLocalDateTime,
+  parseTimeToMinutes,
   roundTo2
 } from "./calculations";
 import type { EinsatzEintrag, Metadaten } from "../types/einsatz";
@@ -94,10 +97,50 @@ export function buildCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]): str
   return `\uFEFF${lines.join("\r\n")}`;
 }
 
+export function buildDetailCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]): string {
+  const lines: string[] = [];
+  const pushLine = (values: Array<string | number>) => {
+    lines.push(values.map((value) => sanitize(String(value))).join(";"));
+  };
+
+  pushLine(["Detailauswertung (Zeitscheiben)"]);
+  pushLine(["Dienststelle", metadaten.dienststelle]);
+  pushLine(["Veranstaltung", metadaten.veranstaltung]);
+  pushLine(["Verein/Veranstalter", metadaten.vereinVeranstalter]);
+  lines.push("");
+
+  pushLine([
+    "Bezeichnung",
+    "Art",
+    "Datum",
+    "Scheibe Start",
+    "Scheibe Ende",
+    "Scheibentyp",
+    "Tarif",
+    "Einheiten",
+    "Satz (EUR)",
+    "Berechnung",
+    "Kosten (EUR)"
+  ]);
+
+  eintraege.forEach((entry) => {
+    const detailRows = buildEntryDetailRows(entry, metadaten.tarife);
+    detailRows.forEach((row) => pushLine(row));
+  });
+
+  return `\uFEFF${lines.join("\r\n")}`;
+}
+
 export function downloadCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
   const csv = buildCsv(metadaten, eintraege);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   triggerDownload(blob, `sgv-export-${new Date().toISOString().slice(0, 10)}.csv`);
+}
+
+export function downloadDetailCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
+  const csv = buildDetailCsv(metadaten, eintraege);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  triggerDownload(blob, `sgv-detail-${new Date().toISOString().slice(0, 10)}.csv`);
 }
 
 export function downloadJson(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
@@ -114,7 +157,14 @@ export function downloadJson(metadaten: Metadaten, eintraege: EinsatzEintrag[]) 
 
 export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
   const { jsPDF } = await import("jspdf");
-  const autoTable = (await import("jspdf-autotable")).default as any;
+  const autoTable = (await import("jspdf-autotable")).default as (
+    doc: InstanceType<typeof jsPDF>,
+    options: {
+      startY?: number;
+      head: string[][];
+      body: string[][];
+    }
+  ) => void;
 
   const doc = new jsPDF({ orientation: "landscape" });
   doc.setFontSize(14);
@@ -186,7 +236,10 @@ export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintra
   });
 
   const total = eintraege.reduce((sum, entry) => sum + entry.gesamtkosten, 0);
-  const finalY = (doc as any).lastAutoTable?.finalY ?? cursor + 60;
+  const docWithTable = doc as InstanceType<typeof jsPDF> & {
+    lastAutoTable?: { finalY?: number };
+  };
+  const finalY = docWithTable.lastAutoTable?.finalY ?? cursor + 60;
   doc.text(`Summe verrechenbar (SGV): ${formatCurrency(total)}`, 14, finalY + 8);
   doc.text(
     `Exportdatum: ${new Date().toLocaleString("de-AT", {
@@ -228,4 +281,109 @@ function formatLocalDateTime(value: string): string {
     hour: "2-digit",
     minute: "2-digit"
   })}`;
+}
+
+function buildEntryDetailRows(
+  entry: EinsatzEintrag,
+  tarife: Metadaten["tarife"]
+): Array<Array<string | number>> {
+  if (entry.artDerKraefte === "Luftfahrzeug") {
+    return buildMinuteRows(entry, tarife);
+  }
+  return buildSliceRows(entry, tarife);
+}
+
+function buildSliceRows(entry: EinsatzEintrag, tarife: Metadaten["tarife"]): Array<Array<string | number>> {
+  const duration = calculateDurationMinutes(entry.beginn, entry.ende);
+  if (!duration || duration <= 0) {
+    return [];
+  }
+  const totalSlices = Math.ceil(duration / 30);
+  const baseDate = parseLocalDate(entry.datum);
+  const startMinutes = parseTimeToMinutes(entry.beginn);
+  if (!baseDate || startMinutes === null) {
+    return [];
+  }
+
+  const rows: Array<Array<string | number>> = [];
+  for (let i = 0; i < totalSlices; i += 1) {
+    const sliceStart = new Date(baseDate.getTime());
+    sliceStart.setMinutes(sliceStart.getMinutes() + startMinutes + i * 30);
+    const sliceEnd = new Date(baseDate.getTime());
+    sliceEnd.setMinutes(sliceEnd.getMinutes() + startMinutes + Math.min((i + 1) * 30, duration));
+
+    const tarif2Active = isTarif2(sliceStart, sliceEnd);
+    const tarifLabel = tarif2Active ? "T2" : "T1";
+    const satz =
+      entry.artDerKraefte === "Dienstkraftfahrzeug"
+        ? tarife.dienstfahrzeug
+        : tarif2Active
+          ? tarife.personalTarif2
+          : tarife.personalTarif1;
+    const kosten = roundTo2(entry.anzahl * satz);
+
+    rows.push([
+      entry.bezeichnung,
+      entry.artDerKraefte,
+      formatDateOnly(sliceStart),
+      formatTimeOnly(sliceStart),
+      formatTimeOnly(sliceEnd),
+      "30min",
+      tarifLabel,
+      entry.anzahl,
+      formatNumber(satz, 2),
+      `${entry.anzahl} x ${formatNumber(satz, 2)}`,
+      formatCurrency(kosten)
+    ]);
+  }
+
+  return rows;
+}
+
+function buildMinuteRows(entry: EinsatzEintrag, tarife: Metadaten["tarife"]): Array<Array<string | number>> {
+  const duration = calculateDurationMinutes(entry.beginn, entry.ende);
+  if (!duration || duration <= 0) {
+    return [];
+  }
+  const baseDate = parseLocalDate(entry.datum);
+  const startMinutes = parseTimeToMinutes(entry.beginn);
+  if (!baseDate || startMinutes === null) {
+    return [];
+  }
+
+  const rows: Array<Array<string | number>> = [];
+  for (let i = 0; i < duration; i += 1) {
+    const minuteStart = new Date(baseDate.getTime());
+    minuteStart.setMinutes(minuteStart.getMinutes() + startMinutes + i);
+    const minuteEnd = new Date(minuteStart.getTime());
+    minuteEnd.setMinutes(minuteEnd.getMinutes() + 1);
+    const kosten = roundTo2(entry.anzahl * tarife.luftfahrzeugProMinute);
+
+    rows.push([
+      entry.bezeichnung,
+      entry.artDerKraefte,
+      formatDateOnly(minuteStart),
+      formatTimeOnly(minuteStart),
+      formatTimeOnly(minuteEnd),
+      "1min",
+      "MIN",
+      entry.anzahl,
+      formatNumber(tarife.luftfahrzeugProMinute, 2),
+      `${entry.anzahl} x ${formatNumber(tarife.luftfahrzeugProMinute, 2)}`,
+      formatCurrency(kosten)
+    ]);
+  }
+
+  return rows;
+}
+
+function formatDateOnly(value: Date): string {
+  return value.toLocaleDateString("de-AT");
+}
+
+function formatTimeOnly(value: Date): string {
+  return value.toLocaleTimeString("de-AT", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }

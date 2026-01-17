@@ -12,7 +12,7 @@ Mitarbeiter der österreichischen Bundespolizei zur Dokumentation und Abrechnung
 - Eingabeformular für Einsatzdaten
 - Automatische Berechnung von Zeitscheiben und Kosten
 - Tabellarische Übersicht aller erfassten Einträge
-- Export/Import-Funktionalitaet (CSV/PDF/JSON)
+- Export/Import-Funktionalität (CSV/PDF/JSON + Detail Auswertung CSV)
 - Responsive Design für Desktop und Tablet
 
 ---
@@ -47,7 +47,7 @@ npm run dev
 
 ## 3. Funktionale Anforderungen
 
-### 3.1 Header-Sektion (Metadaten)
+### 3.1 Header-Sektion (Einsatzdaten)
 
 #### 3.1.0 Überschrift und rechtliche Grundlage
 
@@ -64,7 +64,7 @@ nach dem Sicherheitspolizeigesetz.
 - Trennlinie unterhalb
 - Abstand zum Formular: 2rem
 
-#### 3.1.1 Metadaten-Felder (oberhalb des Eingabeformulars)
+#### 3.1.1 Einsatzdaten-Felder (oberhalb des Eingabeformulars)
 
 **Grunddaten**
 
@@ -85,6 +85,11 @@ nach dem Sicherheitspolizeigesetz.
 | Dienstfahrzeug | Number | 13,00 EUR | Pro halbe Stunde (zusaetzlich) | Rechts oben |
 | Luftfahrzeug pro Minute | Number | 53,00 EUR | Pro Minute (inkl. Personal) | Rechts oben |
 | Durchschn. Stundensatz | Number | 38,40 EUR | **Pro Stunde** (fuer allgemeine Kostenberechnung) | Rechts oben |
+
+**Tarife-Quelle (Ist-Stand):**
+- Standardwerte werden beim Start aus `public/tarife.json` geladen.
+- Button „Tarife neu laden“ lädt die JSON erneut und überschreibt die aktuellen Werte.
+- Falls die JSON nicht erreichbar ist, wird auf einen hart codierten Fallback zurückgegriffen.
 
 **Allgemeine Einsatzzeit (unabhaengig von Tabelle)**
 
@@ -111,9 +116,10 @@ nach dem Sicherheitspolizeigesetz.
 - Die tatsächlichen Kosten sind unabhängig von den verrechenbaren Leistungen in der Tabelle
 - Sie dienen nur der Gesamtübersicht der tatsächlich angefallenen Personalkosten
 
-**Layout-Hinweis:** Diese Metadaten sollten in einem großen Card/Panel oberhalb der Einsatzerfassung dargestellt werden, aufgeteilt in:
+**Layout-Hinweis:** Diese Einsatzdaten sollten in einem großen Card/Panel oberhalb der Einsatzerfassung dargestellt werden, aufgeteilt in:
 - Linke Spalte: Grunddaten (Dienststelle, Veranstaltung, etc.)
 - Rechte Spalte: Tarife + Allgemeine Einsatzzeit + Live-Berechnung der tatsächlichen Kosten
+  - Auf schmalen Bildschirmen bricht der Bereich automatisch in eine Spalte um.
 
 ### 3.2 Eingabeformular (Einsatzdaten)
 
@@ -153,6 +159,7 @@ nach dem Sicherheitspolizeigesetz.
 - Tagging: Tarif-2-Werte als Badge, Luftfahrzeug als eigener Tag
 - Sortierbar per Klick auf Spaltenkoepfe (Bezeichnung, Art, Anzahl, Datum, Beginn, Ende, Kosten)
 - Keine Filterfunktion im Ist-Stand
+- Auf schmalen Bildschirmen: Kartenansicht pro Eintrag (Label/Wert)
 
 #### 3.3.2 Aktionen pro Zeile und Tabelle
 
@@ -168,6 +175,16 @@ nach dem Sicherheitspolizeigesetz.
   - Dialog: "Moechten Sie wirklich alle Eintraege loeschen? Dies kann nicht rueckgaengig gemacht werden."
   - Buttons: [Abbrechen] [Alle loeschen]
 
+**Menue oben rechts (Reihenfolge):**
+- Laden (JSON)
+- Speichern (JSON)
+- Zuruecksetzen
+- CSV Export
+- PDF Export
+- Detail Auswertung (CSV)
+- Hilfe
+- Info
+
 #### 3.3.3 Zusammenfassung (Ist-Stand)
 
 **Footer der Tabelle (Verrechenbare Kosten):**
@@ -177,8 +194,9 @@ nach dem Sicherheitspolizeigesetz.
   - Personal: XXX Halbstunden, XXX EUR
   - Dienstkraftfahrzeuge: XXX Halbstunden, XXX EUR
   - Luftfahrzeug: XXX Minuten, XXX EUR
+  - Spitzenbelegung Personal: max. gleichzeitige Personalanzahl mit Zeitpunkt
 
-**Separate Anzeige (Metadaten-Karte):**
+**Separate Anzeige (Einsatzdaten-Karte):**
 - **Tatsaechliche Kosten** (unabhaengig von SGV)
 - Formel: `Einsatzstunden x Eingesetzte Bedienstete x Durchschn. Stundensatz`
 - Hinweis: "Dies sind die tatsaechlichen Personalkosten, nicht die verrechenbaren Gebuehren."
@@ -189,7 +207,7 @@ Die Exportfunktionen sind im oberen Menue gebuendelt; die Tabelle zeigt nur Date
 ### 3.4 Export-Funktionalitaet
 
 #### 3.4.1 CSV-Export
-- **Metadaten-Block** (erste Zeilen):
+- **Einsatzdaten-Block** (erste Zeilen):
   - Dienststelle, Veranstaltung, Verein, Bescheid-Zahl, PAD-Zahl
   - Tarife (Personal T1/T2, Dienstfahrzeug, Luftfahrzeug pro Minute, Durchschn. Stundensatz)
   - Einsatzzeit von/bis, Eingesetzte Bedienstete
@@ -233,7 +251,7 @@ Summe verrechenbar (SGV);;;;;;;;;;2.500,00;EUR
 - Querformat (bessere Spaltenbreite)
 - **Kopfbereich**:
   - Ueberschrift "Berechnungsblatt fuer Ueberwachungsgebuehren"
-  - Metadaten: Dienststelle, Veranstaltung, Verein, Bescheid-Zahl, PAD-Zahl
+  - Einsatzdaten: Dienststelle, Veranstaltung, Verein, Bescheid-Zahl, PAD-Zahl
   - Tarife: Personal T1/T2, Dienstfahrzeug, Luftfahrzeug pro Minute, Durchschn. Stundensatz
   - Allgemeine Einsatzzeit: Von/Bis, Eingesetzte Bedienstete
 - **Hauptteil**: Tabelle mit Einsatzdaten
@@ -245,6 +263,15 @@ Summe verrechenbar (SGV);;;;;;;;;;2.500,00;EUR
 - Export erzeugt eine JSON-Datei mit `version`, `exportedAt`, `metadaten`, `eintraege`
 - Import liest das gleiche Format ueber "Formular laden"
 
+#### 3.4.4 Detail Auswertung (CSV, Zeitscheiben)
+- Export erzeugt `sgv-detail-YYYY-MM-DD.csv`.
+- Eine Zeile pro abgerechneter Zeitscheibe:
+  - **Personal/Dienstkraftfahrzeug**: 30-Minuten-Scheiben (aufgerundet).
+  - **Luftfahrzeug**: 1-Minuten-Scheiben.
+- Spalten (Ist-Stand):
+  - Bezeichnung, Art, Datum, Scheibe Start/Ende, Scheibentyp (30min/1min), Tarif (T1/T2/MIN),
+    Einheiten, Satz (EUR), Berechnung, Kosten (EUR).
+
 ---
 
 ## 4. Berechnungslogik (Detaillierte Implementierung)
@@ -253,7 +280,7 @@ Summe verrechenbar (SGV);;;;;;;;;;2.500,00;EUR
 
 ### 4.1 Konstanten (Standard-Gebührensätze gemäß SGV)
 
-**Wichtig**: Diese Werte dienen als **Standardwerte** für die Tarif-Felder in den Metadaten. Der Benutzer kann diese Werte im Interface ändern. Die Berechnungen verwenden immer die aktuellen Werte aus den Metadaten!
+**Wichtig**: Diese Werte dienen als **Standardwerte** für die Tarif-Felder in den Einsatzdaten. Der Benutzer kann diese Werte im Interface ändern. Die Berechnungen verwenden immer die aktuellen Werte aus den Einsatzdaten!
 
 ```typescript
 const DEFAULT_TARIFE = {
@@ -428,7 +455,7 @@ function isSundayOrHoliday(date: Date): boolean {
 ```typescript
 /**
  * Berechnet die Gesamtkosten basierend auf Art, Anzahl und Zeitscheiben
- * Verwendet die aktuellen Tarife aus den Metadaten (nicht die Standardwerte!)
+ * Verwendet die aktuellen Tarife aus den Einsatzdaten (nicht die Standardwerte!)
  */
 function calculateCosts(
   type: 'Personal' | 'Dienstkraftfahrzeug' | 'Luftfahrzeug',
@@ -436,7 +463,7 @@ function calculateCosts(
   tarif1Slices: number,
   tarif2Slices: number,
   totalMinutes: number,
-  tarife: Tarife  // Tarife aus Metadaten!
+  tarife: Tarife  // Tarife aus Einsatzdaten!
 ): number {
   if (type === 'Luftfahrzeug') {
     // § 1 Abs. 2 SGV: 53 € pro Minute (keine Zeitscheiben!)
@@ -463,7 +490,7 @@ function calculateCosts(
 ```typescript
 /**
  * Berechnet die tatsächlichen Kosten (unabhängig von SGV)
- * Diese Berechnung wird LIVE in den Metadaten angezeigt
+ * Diese Berechnung wird LIVE in den Einsatzdaten angezeigt
  * 
  * Formel: (Einsatzzeit bis - Einsatzzeit von) in Stunden 
  *         × Eingesetzte Bedienstete 
@@ -539,14 +566,14 @@ function calculateDuration(start: string, end: string): number {
 
 ### 5.1 Layout-Struktur (Ist-Stand)
 - Header mit Titel und Untertitel
-- Metadaten-Karte (Grunddaten, Einsatzzeit, Tarife, Live-Berechnung)
+- Einsatzdaten-Karte (Grunddaten, Einsatzzeit, Tarife, Live-Berechnung)
 - Einsatzformular im Modal-Dialog
 - Tabelle mit Summenzeile
-- Export/Import im Menue rechts oben
+- Export/Import, Hilfe und Info im Menue rechts oben
 
 ### 5.2 Formular-Feedback (Ist-Stand)
 
-#### Live-Berechnung in Metadaten
+#### Live-Berechnung in Einsatzdaten
 - **Tatsaechliche Kosten** werden berechnet, sobald von/bis, Bedienstete und Stundensatz befuellt sind
 - Anzeigezeile zeigt Einsatzstunden und die Formel (mit aktuellen Werten)
 - Hinweistext bei unvollstaendigen Angaben
@@ -567,15 +594,17 @@ function calculateDuration(start: string, end: string): number {
 - Kontrastreiche Farben und ausreichende Touch-Targets
 
 ### 5.4 Responsive Breakpoints (Ist-Stand)
-- Layout basiert auf CSS-Grid mit automatischem Umbruch
+- Layout basiert auf CSS-Grid mit automatischem Umbruch; Einsatzzeit und Live-Berechnung stapeln bei schmalen Screens
 - Breakpoints bei ca. 768px und 640px (kleinere Schrift, gestapelte Inputs)
-- Tabelle bleibt als HTML-Tabelle erhalten, Schriftgroesse wird reduziert
+- Tabelle wird unter 768px als Kartenansicht dargestellt; auf groesseren Screens bleibt die HTML-Tabelle
 
 ---
 
 ## 6. Datenmodell
 
 ### 6.1 TypeScript Interface (Ist-Stand)
+
+**Hinweis:** Im UI heißt der Block **Einsatzdaten**. Im Code bleiben Typname und Storage-Key historisch als `Metadaten` bzw. `sgv-metadaten`.
 
 ```typescript
 interface Tarife {
@@ -665,6 +694,7 @@ interface EinsatzState {
 
 ### 7.3 Sicherheit
 - Keine sensiblen Daten im localStorage (nur Einsatzdaten)
+- Keine serverseitige Speicherung; Laden/Speichern erfolgt lokal im Browser (Datei-Download/Upload)
 - Input-Sanitization für alle Eingaben
 - XSS-Schutz durch React-Standard
 
@@ -708,12 +738,18 @@ abrechnungweb/
 |-- tests/
 |   |-- calculations.test.ts
 |-- public/
+|   |-- favicon.ico
+|-- AGENTS.md
+|-- .eslintrc.cjs
+|-- .eslintignore
+|-- .gitignore
 |-- index.html
 |-- package.json
 |-- package-lock.json
 |-- tsconfig.json
 |-- tsconfig.node.json
 |-- vite.config.ts
+|-- vitest.config.mjs
 ```
 
 ---
@@ -767,8 +803,8 @@ abrechnungweb/
   - Kosten: 6 × 8 × 26€ = 1.248€
   - **Wichtig**: Gaußsche Osterformel muss Ostern 2025 = 20.04. berechnen → Ostermontag = 21.04.
 
-### 9.7 Allgemeine Kostenberechnung (Metadaten - Live-Berechnung)
-- **Input (Metadaten)**:
+### 9.7 Allgemeine Kostenberechnung (Einsatzdaten - Live-Berechnung)
+- **Input (Einsatzdaten)**:
   - Einsatzzeit von: 10.05.2025 20:00
   - Einsatzzeit bis: 10.05.2025 23:15
   - Eingesetzte Bedienstete: 10
@@ -780,7 +816,7 @@ abrechnungweb/
   - **Wichtig**: 
     - Diese Berechnung läuft LIVE während der Eingabe
     - Unabhängig von den verrechenbaren Kosten in der Tabelle!
-    - Wird im Metadaten-Bereich sofort angezeigt
+    - Wird im Einsatzdaten-Bereich sofort angezeigt
 
 ### 9.8 Live-Update Test
 - **Szenario**: Benutzer ändert "Eingesetzte Bedienstete" von 10 auf 15
@@ -799,7 +835,7 @@ abrechnungweb/
 
 ### 10.1 Kernmodule
 - `src/App.tsx`: State, Sortierung, Dialog-Steuerung, Summenberechnung
-- `src/components/*.tsx`: Header, Metadaten-Formular, Einsatz-Formular, Tabelle, Export-Menue
+- `src/components/*.tsx`: Header, Einsatzdaten-Formular (Dateiname: `MetadatenFormular.tsx`), Einsatz-Formular, Tabelle, Export-Menue
 - `src/components/ui/*`: Native Date/Time Inputs
 - `src/lib/calculations.ts`: Berechnungslogik (Zeitscheiben, Feiertage, Kosten)
 - `src/lib/export.ts`: CSV/PDF/JSON Export
@@ -811,7 +847,7 @@ abrechnungweb/
 - Sonntag/Feiertag => Tarif 2 ganztags
 - Mitternachtsuebergang (Ende < Beginn) wird korrekt berechnet
 - Luftfahrzeug: Abrechnung pro Minute, keine Zeitscheiben
-- Tarife kommen aus Metadaten (veraenderbar)
+- Tarife kommen aus Einsatzdaten (veraenderbar)
 - Durchschn. Stundensatz bezieht sich auf 1 Stunde
 
 ---
@@ -867,5 +903,6 @@ Diese Features sind NICHT Teil des ersten Releases, können aber später ergänz
 npm install
 npm run dev
 npm run test
+npm run lint
 npm run build
 ```

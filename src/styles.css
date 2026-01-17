@@ -59,6 +59,44 @@ h2 {
   padding: 16px;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.section-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.small-button {
+  width: auto;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.status-text {
+  font-size: 12px;
+}
+
+.status-success {
+  color: #2f6f3e;
+}
+
+.status-error {
+  color: #b24a3a;
+}
+
+.status-loading {
+  color: #6d655b;
+}
+
 .metadata-card .metadata-row {
   display: grid;
   gap: 12px;
@@ -70,7 +108,7 @@ h2 {
 }
 
 .metadata-card .metadata-row-2 {
-  grid-template-columns: minmax(220px, 1.2fr) minmax(220px, 1.2fr) minmax(160px, 0.7fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   align-items: start;
 }
 
@@ -113,6 +151,10 @@ h2 {
 @media (max-width: 640px) {
   .date-time-picker {
     grid-template-columns: 1fr;
+  }
+
+  .metadata-summary-line {
+    font-size: 12px;
   }
 }
 
@@ -195,6 +237,14 @@ button:hover:not(:disabled) {
   font-size: 14px;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.table-wrapper .table {
+  min-width: 720px;
+}
+
 .table th,
 .table td {
   padding: 10px 8px;
@@ -259,6 +309,49 @@ button:hover:not(:disabled) {
   padding: 14px;
   border-radius: 12px;
   border: 1px dashed #c9c2b8;
+}
+
+.mobile-cards {
+  display: none;
+}
+
+.mobile-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #efe6da;
+  padding: 12px;
+  box-shadow: 0 12px 22px rgba(25, 17, 8, 0.08);
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-card-title {
+  font-weight: 700;
+}
+
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-card-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.mobile-card-row span:first-child {
+  color: #6d655b;
+}
+
+.mobile-card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
 }
 
 .modal-backdrop {
@@ -491,5 +584,14 @@ small.muted {
   .table th,
   .table td {
     font-size: 12px;
+  }
+
+  .table-wrapper {
+    display: none;
+  }
+
+  .mobile-cards {
+    display: grid;
+    gap: 12px;
   }
 }
