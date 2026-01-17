@@ -34,7 +34,7 @@ Mitarbeiter der österreichischen Bundespolizei zur Dokumentation und Abrechnung
   - `jspdf` + `jspdf-autotable` fuer PDF
   - CSV-Export (UTF-8 BOM, Semikolon)
   - JSON Export/Import fuer Formular-Daten
-- **State/Persistenz**: React State + localStorage (sgv-metadaten, sgv-eintraege, sgv-draft)
+- **State/Persistenz**: React State + localStorage (sgv-metadaten, sgv-eintraege, sgv-draft, sgv-tarif-config)
 - **Testing**: Vitest (Berechnungslogik)
 
 ### 2.3 Entwicklungsumgebung
@@ -76,20 +76,28 @@ nach dem Sicherheitspolizeigesetz.
 | Bescheid Zahl | Text | Optional, Max. 50 Zeichen | Geschäftszahl des Bescheids | Links |
 | PAD Zahl | Text | Optional, Max. 50 Zeichen | PAD-Nummer | Links |
 
-**Tarife (vorbelegt, aenderbar)**
+
+**Tarife (Anzeige + Tarifmodell)**
 
 | Feldname | Typ | Standardwert | Beschreibung | Position |
 |----------|-----|--------------|--------------|----------|
-| Personal Tarif 1 | Number | 17,00 EUR | Pro halbe Stunde (06:00-22:00, Mo-Sa) | Rechts oben |
-| Personal Tarif 2 | Number | 26,00 EUR | Pro halbe Stunde (22:00-06:00 oder So/Feiertag) | Rechts oben |
-| Dienstfahrzeug | Number | 13,00 EUR | Pro halbe Stunde (zusaetzlich) | Rechts oben |
-| Luftfahrzeug pro Minute | Number | 53,00 EUR | Pro Minute (inkl. Personal) | Rechts oben |
+| Tarifmodell | Select | Standard | Auswahl: Standard / Oeffentl. Gesundheitsinteresse (mit Erwerbsinteresse) / Oeffentl. Gesundheitsinteresse (ohne Erwerbsinteresse) | Rechts oben |
+| Personal Tarif 1 | Read-only | 17,00 EUR | Pro halbe Stunde (06:00-22:00, Werktage); Wert aus Tarif-Dialog | Rechts oben |
+| Personal Tarif 2 | Read-only | 26,00 EUR | Pro halbe Stunde (22:00-06:00 oder So/Feiertag); Wert aus Tarif-Dialog | Rechts oben |
+| Dienstfahrzeug | Read-only | 13,00 EUR | Pro halbe Stunde (zusaetzlich); Wert aus Tarif-Dialog | Rechts oben |
+| Luftfahrzeug pro Minute | Read-only | 53,00 EUR | Pro Minute (inkl. Personal); Wert aus Tarif-Dialog | Rechts oben |
 | Durchschn. Stundensatz | Number | 38,40 EUR | **Pro Stunde** (fuer allgemeine Kostenberechnung) | Rechts oben |
 
 **Tarife-Quelle (Ist-Stand):**
-- Standardwerte werden beim Start aus `public/tarife.json` geladen.
-- Button „Tarife neu laden“ lädt die JSON erneut und überschreibt die aktuellen Werte.
-- Falls die JSON nicht erreichbar ist, wird auf einen hart codierten Fallback zurückgegriffen.
+- Default-Konfiguration wird beim Start aus `public/tarife.json` geladen, aber nur wenn keine gespeicherte Tarif-Konfiguration vorhanden ist.
+- Button "Tarife neu laden" im Tarif-Dialog laedt die JSON erneut und ueberschreibt die aktuellen Werte.
+- Falls die JSON nicht erreichbar oder ungueltig ist, bleiben die bestehenden Werte unveraendert.
+
+**Tarif-Dialog (Kurzuebersicht)**
+- Aufruf ueber "Tarife anzeigen" (Einsatzdaten) oder Menue-Eintrag "Tarife".
+- Tabelle mit editierbaren Saetzen: Standard, Oeffentl. Gesundheitsinteresse (mit/ohne Erwerbsinteresse).
+- Zusatzkosten: Dienstfahrzeug (EUR/30min) und Luftfahrzeug (EUR/Minute).
+- Aenderungen wirken sofort und werden lokal gespeichert.
 
 **Allgemeine Einsatzzeit (unabhaengig von Tabelle)**
 
@@ -182,6 +190,7 @@ nach dem Sicherheitspolizeigesetz.
 - CSV Export
 - PDF Export
 - Detail Auswertung (CSV)
+- Tarife
 - Hilfe
 - Info
 
@@ -209,7 +218,7 @@ Die Exportfunktionen sind im oberen Menue gebuendelt; die Tabelle zeigt nur Date
 #### 3.4.1 CSV-Export
 - **Einsatzdaten-Block** (erste Zeilen):
   - Dienststelle, Veranstaltung, Verein, Bescheid-Zahl, PAD-Zahl
-  - Tarife (Personal T1/T2, Dienstfahrzeug, Luftfahrzeug pro Minute, Durchschn. Stundensatz)
+  - Tarife (Tarifmodell, Personal T1/T2, Dienstfahrzeug, Luftfahrzeug pro Minute, Durchschn. Stundensatz)
   - Einsatzzeit von/bis, Eingesetzte Bedienstete
   - Einsatzstunden (berechnet)
   - Tatsaechliche Kosten (berechnet)
@@ -227,11 +236,12 @@ Bescheid Zahl;2025-123456
 PAD Zahl;PAD-2025-001
 
 Tarife
+Tarifmodell;Standard
 Personal Tarif 1;17,00;EUR/30min
 Personal Tarif 2;26,00;EUR/30min
 Dienstfahrzeug;13,00;EUR/30min
 Luftfahrzeug pro Minute;53,00;EUR/min
-Durchschn. Stundensatz;38,40;EUR/h
+Durchschn. Stundensatz;38,40;EUR/Std
 
 Allgemeine Einsatzzeit
 Von;2025-05-10T20:00
@@ -252,7 +262,7 @@ Summe verrechenbar (SGV);;;;;;;;;;2.500,00;EUR
 - **Kopfbereich**:
   - Ueberschrift "Berechnungsblatt fuer Ueberwachungsgebuehren"
   - Einsatzdaten: Dienststelle, Veranstaltung, Verein, Bescheid-Zahl, PAD-Zahl
-  - Tarife: Personal T1/T2, Dienstfahrzeug, Luftfahrzeug pro Minute, Durchschn. Stundensatz
+  - Tarife: Tarifmodell, Personal T1/T2, Dienstfahrzeug, Luftfahrzeug pro Minute, Durchschn. Stundensatz
   - Allgemeine Einsatzzeit: Von/Bis, Eingesetzte Bedienstete
 - **Hauptteil**: Tabelle mit Einsatzdaten
 - **Fussbereich**:
@@ -283,21 +293,19 @@ Summe verrechenbar (SGV);;;;;;;;;;2.500,00;EUR
 **Wichtig**: Diese Werte dienen als **Standardwerte** für die Tarif-Felder in den Einsatzdaten. Der Benutzer kann diese Werte im Interface ändern. Die Berechnungen verwenden immer die aktuellen Werte aus den Einsatzdaten!
 
 ```typescript
-const DEFAULT_TARIFE = {
-  PERSONAL: {
-    TARIF_1: 17.00,  // € pro halbe Stunde (06:00-22:00, Mo-Sa)
-    TARIF_2: 26.00   // € pro halbe Stunde (22:00-06:00 oder So/Feiertag)
+const DEFAULT_TARIFKONFIG = {
+  kategorien: {
+    standard: { tarif1: 17.00, tarif2: 26.00 },
+    gesundheit: { tarif1: 13.00, tarif2: 17.00 },
+    gesundheitOhneErwerb: { tarif1: 7.00, tarif2: 7.00 }
   },
-  FAHRZEUG: {
-    ZUSATZ: 13.00    // € pro halbe Stunde (zusätzlich zum Personal)
-  },
-  LUFTFAHRZEUG: {
-    PRO_MINUTE: 53.00 // € pro Minute (inkl. Personal)
-  },
-  DURCHSCHNITT: {
-    STUNDENSATZ: 38.40 // € PRO STUNDE (für allgemeine Kostenberechnung)
+  zusatz: {
+    dienstfahrzeug: 13.00,
+    luftfahrzeugProMinute: 53.00
   }
 } as const;
+
+const DEFAULT_DURCHSCHN_STUNDENSATZ = 38.40;
 
 const TARIF_2_ZEITRAUM = {
   START: 22, // 22:00 Uhr
@@ -305,72 +313,26 @@ const TARIF_2_ZEITRAUM = {
 };
 ```
 
+
 ### 4.2 Funktion: Zeitscheiben berechnen
 
 ```typescript
 /**
- * Berechnet die Anzahl der 30-Minuten-Zeitscheiben
- * § 1 Abs. 1 SGV: Jede angefangene halbe Stunde wird voll verrechnet
- */
-function calculateTimeSlices(start: string, end: string, date: Date): {
-  tarif1: number;
-  tarif2: number;
-  totalMinutes: number;
-} {
-  // 1. Gesamtdauer berechnen (Mitternachtsübergang berücksichtigen)
-  const duration = calculateDuration(start, end);
-  
-  // 2. Anzahl Zeitscheiben = aufrunden(Minuten / 30)
-  const totalSlices = Math.ceil(duration / 30);
-  
-  // 3. Jede Zeitscheibe prüfen: Tarif 1 oder Tarif 2?
-  let tarif1Count = 0;
-  let tarif2Count = 0;
-  
-  for (let i = 0; i < totalSlices; i++) {
-    const sliceStart = addMinutes(start, i * 30);
-    const sliceEnd = addMinutes(start, Math.min((i + 1) * 30, duration));
-    
-    if (isTarif2(sliceStart, sliceEnd, date)) {
-      tarif2Count++;
-    } else {
-      tarif1Count++;
-    }
-  }
-  
-  return { tarif1: tarif1Count, tarif2: tarif2Count, totalMinutes: duration };
-}
-```
-
-### 4.3 Funktion: Tarif 2 Prüfung
-
-```typescript
-/**
- * Prüft, ob eine Zeitscheibe unter Tarif 2 fällt
+ * Prueft, ob eine Zeitscheibe unter Tarif 2 faellt
  * Tarif 2 gilt bei:
- * - Nachtzeit (22:00 - 06:00)
- * - Sonn- oder Feiertag (ganztägig)
+ * - Nachtzeit (Beginn zwischen 22:00 und 06:00)
+ * - Sonn- oder Feiertag (Beginn der Halbstunde)
  */
-function isTarif2(sliceStart: Date, sliceEnd: Date, date: Date): boolean {
-  // Prüfung 1: Ist es ein Sonn- oder Feiertag?
-  if (isSundayOrHoliday(date)) {
+function isTarif2(sliceStart: Date): boolean {
+  if (isSundayOrHoliday(sliceStart)) {
     return true;
   }
-  
-  // Prüfung 2: Liegt die Zeitscheibe (ganz oder teilweise) in der Nachtzeit?
-  const startHour = sliceStart.getHours();
-  const endHour = sliceEnd.getHours();
-  
-  // Nachtzeit: 22:00 - 06:00
-  const isNightTime = (
-    startHour >= 22 || startHour < 6 ||
-    endHour >= 22 || endHour < 6 ||
-    (startHour < 6 && endHour >= 22) // Über Mitternacht
-  );
-  
-  return isNightTime;
+
+  const minutes = sliceStart.getHours() * 60 + sliceStart.getMinutes();
+  return minutes >= 22 * 60 || minutes < 6 * 60;
 }
 ```
+
 
 ### 4.4 Funktion: Feiertage Österreich
 
@@ -608,11 +570,25 @@ function calculateDuration(start: string, end: string): number {
 
 ```typescript
 interface Tarife {
-  personalTarif1: number; // 17.00 EUR pro 30 Minuten
-  personalTarif2: number; // 26.00 EUR pro 30 Minuten
-  dienstfahrzeug: number; // 13.00 EUR pro 30 Minuten
-  luftfahrzeugProMinute: number; // 53.00 EUR pro Minute
-  durchschnStundensatz: number; // 38.40 EUR pro Stunde
+  personalTarif1: number; // EUR pro 30 Minuten
+  personalTarif2: number; // EUR pro 30 Minuten
+  dienstfahrzeug: number; // EUR pro 30 Minuten
+  luftfahrzeugProMinute: number; // EUR pro Minute
+  durchschnStundensatz: number; // EUR pro Stunde
+}
+
+type TarifKategorie = "standard" | "gesundheit" | "gesundheitOhneErwerb";
+
+interface TarifKonfiguration {
+  kategorien: {
+    standard: { tarif1: number; tarif2: number };
+    gesundheit: { tarif1: number; tarif2: number };
+    gesundheitOhneErwerb: { tarif1: number; tarif2: number };
+  };
+  zusatz: {
+    dienstfahrzeug: number;
+    luftfahrzeugProMinute: number;
+  };
 }
 
 interface AllgemeineEinsatzzeit {
@@ -627,6 +603,7 @@ interface Metadaten {
   vereinVeranstalter: string;
   bescheidZahl?: string;
   padZahl?: string;
+  tarifKategorie: TarifKategorie;
   tarife: Tarife;
   allgemeineEinsatzzeit: AllgemeineEinsatzzeit;
 }
@@ -674,7 +651,8 @@ interface EinsatzState {
 {
   "sgv-metadaten": Metadaten,
   "sgv-eintraege": EinsatzEintrag[],
-  "sgv-draft": Partial<EinsatzEintrag>
+  "sgv-draft": Partial<EinsatzEintrag>,
+  "sgv-tarif-config": TarifKonfiguration
 }
 ```
 
@@ -847,7 +825,7 @@ abrechnungweb/
 - Sonntag/Feiertag => Tarif 2 ganztags
 - Mitternachtsuebergang (Ende < Beginn) wird korrekt berechnet
 - Luftfahrzeug: Abrechnung pro Minute, keine Zeitscheiben
-- Tarife kommen aus Einsatzdaten (veraenderbar)
+- Tarife kommen aus dem Tarif-Dialog; Einsatzdaten zeigen nur Anzeige; Tarifmodell bestimmt die Auswahl
 - Durchschn. Stundensatz bezieht sich auf 1 Stunde
 
 ---

@@ -8,13 +8,15 @@ interface ExportButtonsProps {
   eintraege: EinsatzEintrag[];
   onImportJson?: (payload: unknown) => void;
   onReset?: () => void;
+  onOpenTarife?: () => void;
 }
 
 export default function ExportButtons({
   metadaten,
   eintraege,
   onImportJson,
-  onReset
+  onReset,
+  onOpenTarife
 }: ExportButtonsProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const menuRef = useRef<HTMLDetailsElement | null>(null);
@@ -54,6 +56,13 @@ export default function ExportButtons({
     closeMenu();
   };
 
+  const handleOpenTarife = () => {
+    if (onOpenTarife) {
+      onOpenTarife();
+    }
+    closeMenu();
+  };
+
   return (
     <div className="actions export-actions">
       <details className="menu" ref={menuRef}>
@@ -89,6 +98,11 @@ export default function ExportButtons({
           <button type="button" onClick={() => handleExport(() => downloadPdf(metadaten, eintraege))}>
             PDF erstellen
           </button>
+          {onOpenTarife ? (
+            <button type="button" onClick={handleOpenTarife}>
+              Tarife
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => {
@@ -185,7 +199,7 @@ export default function ExportButtons({
                 <ul className="help-list">
                   <li>Dienststelle, Veranstaltung und Veranstalter eintragen</li>
                   <li>Einsatzzeit von/bis w&auml;hlen</li>
-                  <li>Bedienstete und Tarife pr&uuml;fen/anpassen</li>
+                  <li>Tarifmodell w&auml;hlen und Tarife pr&uuml;fen</li>
                 </ul>
               </div>
               <div className="info-block">

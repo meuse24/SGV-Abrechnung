@@ -148,8 +148,9 @@ export function calculateEntryCosts(
     };
   }
 
-  const gesamt =
-    anzahl * (slices.tarif1 * tarife.personalTarif1 + slices.tarif2 * tarife.personalTarif2);
+  const tarif1Satz = tarife.personalTarif1;
+  const tarif2Satz = tarife.personalTarif2;
+  const gesamt = anzahl * (slices.tarif1 * tarif1Satz + slices.tarif2 * tarif2Satz);
   return {
     tarif1: slices.tarif1,
     tarif2: slices.tarif2,

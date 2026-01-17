@@ -31,6 +31,7 @@ export function buildCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]): str
   pushLine(["PAD Zahl", metadaten.padZahl ?? ""]);
   lines.push("");
   pushLine(["Tarife"]);
+  pushLine(["Tarifmodell", formatTarifKategorie(metadaten.tarifKategorie)]);
   pushLine(["Personal Tarif 1", formatNumber(metadaten.tarife.personalTarif1), "EUR/30min"]);
   pushLine(["Personal Tarif 2", formatNumber(metadaten.tarife.personalTarif2), "EUR/30min"]);
   pushLine(["Dienstfahrzeug", formatNumber(metadaten.tarife.dienstfahrzeug), "EUR/30min"]);
@@ -42,7 +43,7 @@ export function buildCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]): str
   pushLine([
     "Durchschn. Stundensatz",
     formatNumber(metadaten.tarife.durchschnStundensatz),
-    "EUR/h"
+    "EUR/Std"
   ]);
   lines.push("");
   pushLine(["Allgemeine Einsatzzeit"]);
@@ -192,7 +193,14 @@ export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintra
   cursor += 8;
 
   doc.text(
-    `Tarife: P1 ${formatNumber(metadaten.tarife.personalTarif1)} | P2 ${formatNumber(
+    `Tarifmodell: ${formatTarifKategorie(metadaten.tarifKategorie)}`,
+    14,
+    cursor
+  );
+  cursor += 6;
+
+  doc.text(
+    `Tarife (pro 30 Min): P1 ${formatNumber(metadaten.tarife.personalTarif1)} | P2 ${formatNumber(
       metadaten.tarife.personalTarif2
     )} | Fahrzeug ${formatNumber(metadaten.tarife.dienstfahrzeug)} | Luft/min ${formatNumber(
       metadaten.tarife.luftfahrzeugProMinute
@@ -265,6 +273,17 @@ function triggerDownload(blob: Blob, filename: string) {
   window.setTimeout(() => {
     window.URL.revokeObjectURL(url);
   }, 1000);
+}
+
+function formatTarifKategorie(value: string): string {
+  switch (value) {
+    case "gesundheit":
+      return "\u00d6ffentl. Gesundheitsinteresse (mit Erwerbsinteresse)";
+    case "gesundheitOhneErwerb":
+      return "\u00d6ffentl. Gesundheitsinteresse (ohne Erwerbsinteresse)";
+    default:
+      return "Standard";
+  }
 }
 
 function formatLocalDate(value: string): string {

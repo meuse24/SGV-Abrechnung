@@ -6,6 +6,24 @@
   durchschnStundensatz: number;
 }
 
+
+export type TarifKategorie =
+  | "standard"
+  | "gesundheit"
+  | "gesundheitOhneErwerb";
+
+export interface TarifKonfiguration {
+  kategorien: {
+    standard: { tarif1: number; tarif2: number };
+    gesundheit: { tarif1: number; tarif2: number };
+    gesundheitOhneErwerb: { tarif1: number; tarif2: number };
+  };
+  zusatz: {
+    dienstfahrzeug: number;
+    luftfahrzeugProMinute: number;
+  };
+}
+
 export interface AllgemeineEinsatzzeit {
   von: string; // Local datetime: YYYY-MM-DDTHH:mm
   bis: string; // Local datetime: YYYY-MM-DDTHH:mm
@@ -18,6 +36,7 @@ export interface Metadaten {
   vereinVeranstalter: string;
   bescheidZahl?: string;
   padZahl?: string;
+  tarifKategorie: TarifKategorie;
   tarife: Tarife;
   allgemeineEinsatzzeit: AllgemeineEinsatzzeit;
 }

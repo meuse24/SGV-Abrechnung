@@ -8,7 +8,7 @@
   - `src/constants/`, `src/types/`, and `src/hooks/` provide shared config, types, and state helpers.
 - `tests/` contains Vitest unit tests (e.g., `calculations.test.ts`).
 - `public/` and `index.html` hold static assets and the entry HTML (e.g., `public/favicon.ico`).
-  - `public/tarife.json` provides default tariff values loaded on startup (with hardcoded fallback).
+  - `public/tarife.json` provides default tariff configuration (Kategorien + Zusatzkosten) and is loaded on first start if no saved config exists (or via "Tarife neu laden" in the Tarif-Dialog).
 - `dist/` is the production build output (generated).
 
 ## Build, Test, and Development Commands

@@ -11,6 +11,7 @@ import type { EinsatzEintrag } from "./types/einsatz";
 
 const EMPTY_DRAFT: Partial<EinsatzFormValues> = createDefaultDraft();
 const ART_DER_KRAEFTE = ["Personal", "Dienstkraftfahrzeug", "Luftfahrzeug"] as const;
+const TARIF_KATEGORIEN = ["standard", "gesundheit", "gesundheitOhneErwerb"] as const;
 const importSchema = z.object({
   metadaten: z.object({
     dienststelle: z.string(),
@@ -18,6 +19,7 @@ const importSchema = z.object({
     vereinVeranstalter: z.string(),
     bescheidZahl: z.string().optional(),
     padZahl: z.string().optional(),
+    tarifKategorie: z.enum(TARIF_KATEGORIEN),
     tarife: z.object({
       personalTarif1: z.number().finite(),
       personalTarif2: z.number().finite(),
@@ -60,11 +62,15 @@ export default function App() {
     clearEintraege,
     draft,
     setDraft,
+    tarifConfig,
+    setTarifConfig,
+    setTarifKategorie,
     loadTarifeFromJson,
     tarifeStatus
   } = useEinsatzState();
   const [editing, setEditing] = useState<EinsatzEintrag | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [tarifDialogOpen, setTarifDialogOpen] = useState(false);
   const [sort, setSort] = useState<{ key: keyof EinsatzEintrag; direction: "asc" | "desc" }>(
     {
       key: "datum",
@@ -238,12 +244,19 @@ export default function App() {
           eintraege={computedEntries}
           onImportJson={handleImportJson}
           onReset={handleReset}
+          onOpenTarife={() => setTarifDialogOpen(true)}
         />
       </div>
       <Header />
       <MetadatenFormular
         metadaten={metadaten}
         onChange={setMetadaten}
+        onTarifKategorieChange={setTarifKategorie}
+        tarifConfig={tarifConfig}
+        onTarifConfigChange={setTarifConfig}
+        tarifDialogOpen={tarifDialogOpen}
+        onTarifDialogOpen={() => setTarifDialogOpen(true)}
+        onTarifDialogClose={() => setTarifDialogOpen(false)}
         onReloadTarife={loadTarifeFromJson}
         tarifeStatus={tarifeStatus}
       />

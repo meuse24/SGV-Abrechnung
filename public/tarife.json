@@ -1,7 +1,20 @@
-{
-  "personalTarif1": 17.0,
-  "personalTarif2": 26.0,
-  "dienstfahrzeug": 13.0,
-  "luftfahrzeugProMinute": 53.0,
-  "durchschnStundensatz": 38.4
+﻿{
+  "kategorien": {
+    "standard": {
+      "tarif1": 17.0,
+      "tarif2": 26.0
+    },
+    "gesundheit": {
+      "tarif1": 13.0,
+      "tarif2": 17.0
+    },
+    "gesundheitOhneErwerb": {
+      "tarif1": 7.0,
+      "tarif2": 7.0
+    }
+  },
+  "zusatz": {
+    "dienstfahrzeug": 13.0,
+    "luftfahrzeugProMinute": 53.0
+  }
 }

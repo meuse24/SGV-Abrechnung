@@ -5,15 +5,15 @@ import {
   calculatePeakPersonal,
   calculateTimeSlices
 } from "../src/lib/calculations";
-import { DEFAULT_TARIFE } from "../src/constants/tarife";
+import { DEFAULT_DURCHSCHN_STUNDENSATZ, DEFAULT_TARIFKONFIG } from "../src/constants/tarife";
 import type { EinsatzEintrag } from "../src/types/einsatz";
 
 const tarife = {
-  personalTarif1: DEFAULT_TARIFE.PERSONAL.TARIF_1,
-  personalTarif2: DEFAULT_TARIFE.PERSONAL.TARIF_2,
-  dienstfahrzeug: DEFAULT_TARIFE.FAHRZEUG.ZUSATZ,
-  luftfahrzeugProMinute: DEFAULT_TARIFE.LUFTFAHRZEUG.PRO_MINUTE,
-  durchschnStundensatz: DEFAULT_TARIFE.DURCHSCHNITT.STUNDENSATZ
+  personalTarif1: DEFAULT_TARIFKONFIG.kategorien.standard.tarif1,
+  personalTarif2: DEFAULT_TARIFKONFIG.kategorien.standard.tarif2,
+  dienstfahrzeug: DEFAULT_TARIFKONFIG.zusatz.dienstfahrzeug,
+  luftfahrzeugProMinute: DEFAULT_TARIFKONFIG.zusatz.luftfahrzeugProMinute,
+  durchschnStundensatz: DEFAULT_DURCHSCHN_STUNDENSATZ
 };
 
 describe("calculations", () => {
