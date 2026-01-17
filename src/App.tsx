@@ -168,18 +168,13 @@ export default function App() {
   };
 
   const handleImportJson = (payload: unknown) => {
-    if (!isRecord(payload)) {
-      window.alert("Ung\u00fcltiges JSON-Format.");
+    const parsed = importSchema.safeParse(payload);
+    if (!parsed.success) {
+      window.alert("JSON enthält keine gültigen Formulardaten.");
       return;
     }
-    const metadatenData = payload.metadaten;
-    const eintraegeData = payload.eintraege;
-    if (!isRecord(metadatenData) || !Array.isArray(eintraegeData)) {
-      window.alert("JSON enth\u00e4lt keine g\u00fcltigen Formulardaten.");
-      return;
-    }
-    setMetadaten(metadatenData as unknown as typeof metadaten);
-    setEintraege(eintraegeData as EinsatzEintrag[]);
+    setMetadaten(parsed.data.metadaten);
+    setEintraege(parsed.data.eintraege as EinsatzEintrag[]);
     setDraft(EMPTY_DRAFT);
     setEditing(null);
     setDialogOpen(false);
