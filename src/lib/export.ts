@@ -10,6 +10,15 @@ import {
 import type { EinsatzEintrag, Metadaten } from "../types/einsatz";
 import { formatCurrency, formatNumber } from "./utils";
 
+export interface PdfSummary {
+  totalKosten: number;
+  totalEintraege: number;
+  personal: { scheiben: number; kosten: number };
+  fahrzeug: { scheiben: number; kosten: number };
+  luft: { minuten: number; kosten: number };
+  peakPersonal: { count: number; time: Date | null };
+}
+
 function sanitize(value: string | number) {
   const text = String(value).replace(/;/g, ",");
   if (typeof value === "string" && /^\s*[=+\-@]/.test(text)) {
@@ -181,7 +190,7 @@ export async function downloadJson(metadaten: Metadaten, eintraege: EinsatzEintr
   });
 }
 
-export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
+export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintrag[], summary: PdfSummary) {
   const { jsPDF } = await import("jspdf");
   const autoTable = (await import("jspdf-autotable")).default as (
     doc: InstanceType<typeof jsPDF>,
@@ -189,6 +198,7 @@ export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintra
       startY?: number;
       head: string[][];
       body: string[][];
+      columnStyles?: Record<number, { halign?: "left" | "center" | "right" }>;
     }
   ) => void;
 
@@ -203,25 +213,17 @@ export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintra
   );
 
   let cursor = 30;
-  doc.text(`Dienststelle: ${metadaten.dienststelle}`, 14, cursor);
-  cursor += 6;
-  doc.text(`Veranstaltung: ${metadaten.veranstaltung}`, 14, cursor);
-  cursor += 6;
-  doc.text(`Verein/Veranstalter: ${metadaten.vereinVeranstalter}`, 14, cursor);
-  cursor += 6;
-  doc.text(`Bescheid Zahl: ${metadaten.bescheidZahl ?? ""}`, 14, cursor);
-  doc.text(`PAD Zahl: ${metadaten.padZahl ?? ""}`, 120, cursor);
-  cursor += 8;
-
   doc.text(
-    `Tarifmodell: ${formatTarifKategorie(metadaten.tarifKategorie)}`,
+    `Dienststelle: ${metadaten.dienststelle} | Veranstaltung: ${metadaten.veranstaltung} | Verein: ${metadaten.vereinVeranstalter}`,
     14,
     cursor
   );
   cursor += 6;
+  doc.text(`Bescheid Zahl: ${metadaten.bescheidZahl ?? ""}, PAD Zahl: ${metadaten.padZahl ?? ""}`, 14, cursor);
+  cursor += 8;
 
   doc.text(
-    `Tarife (pro 30 Min): P1 ${formatNumber(metadaten.tarife.personalTarif1)} | P2 ${formatNumber(
+    `Tarifmodell: ${formatTarifKategorie(metadaten.tarifKategorie)} | Tarife (pro 30 Min): P1 ${formatNumber(metadaten.tarife.personalTarif1)} | P2 ${formatNumber(
       metadaten.tarife.personalTarif2
     )} | Fahrzeug ${formatNumber(metadaten.tarife.dienstfahrzeug)} | Luft/min ${formatNumber(
       metadaten.tarife.luftfahrzeugProMinute
@@ -233,10 +235,43 @@ export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintra
 
   const einsatzVon = formatLocalDateTime(metadaten.allgemeineEinsatzzeit.von);
   const einsatzBis = formatLocalDateTime(metadaten.allgemeineEinsatzzeit.bis);
-  doc.text(`Allgem. Einsatzzeit: ${einsatzVon} - ${einsatzBis}`, 14, cursor);
-  cursor += 6;
   doc.text(
-    `Eingesetzte Bedienstete: ${metadaten.allgemeineEinsatzzeit.eingesetzteBedienstete}`,
+    `Allgem. Einsatzzeit: ${einsatzVon} - ${einsatzBis} | Eingesetzte Bedienstete: ${metadaten.allgemeineEinsatzzeit.eingesetzteBedienstete}`,
+    14,
+    cursor
+  );
+  cursor += 8;
+
+  const einsatzstunden = calculateEinsatzstunden(
+    metadaten.allgemeineEinsatzzeit.von,
+    metadaten.allgemeineEinsatzzeit.bis
+  ) ?? 0;
+  const bedienstete = metadaten.allgemeineEinsatzzeit.eingesetzteBedienstete;
+  const stundensatz = metadaten.tarife.durchschnStundensatz;
+  const tatsaechlicheKosten = roundTo2(einsatzstunden * bedienstete * stundensatz);
+  doc.text(
+    `Tats\u00e4chliche Kosten: Einsatzstunden ${formatNumber(einsatzstunden)} Std | ${formatCurrency(tatsaechlicheKosten)} (${formatNumber(einsatzstunden)} * ${bedienstete} * ${formatNumber(stundensatz)})`,
+    14,
+    cursor
+  );
+  cursor += 6;
+
+  const peakText = summary.peakPersonal.count > 0 && summary.peakPersonal.time
+    ? `${summary.peakPersonal.count} am ${formatPeakDateTime(summary.peakPersonal.time)}`
+    : "\u2014";
+  const kostenParts: string[] = [];
+  if (summary.personal.scheiben > 0) {
+    kostenParts.push(`Personal ${summary.personal.scheiben} Halbstunden (${formatCurrency(summary.personal.kosten)})`);
+  }
+  if (summary.fahrzeug.scheiben > 0) {
+    kostenParts.push(`Fahrzeuge ${summary.fahrzeug.scheiben} Halbstunden (${formatCurrency(summary.fahrzeug.kosten)})`);
+  }
+  if (summary.luft.minuten > 0) {
+    kostenParts.push(`Luftfahrzeug ${summary.luft.minuten} Min (${formatCurrency(summary.luft.kosten)})`);
+  }
+  kostenParts.push(`Spitzen-Personaleinsatz: ${peakText}`);
+  doc.text(
+    `Verrechnete Kosten: ${kostenParts.join(" | ")}`,
     14,
     cursor
   );
@@ -265,7 +300,13 @@ export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintra
       String(entry.zeitscheibenTarif1),
       String(entry.zeitscheibenTarif2),
       formatCurrency(entry.gesamtkosten)
-    ])
+    ]),
+    columnStyles: {
+      2: { halign: "right" },
+      6: { halign: "right" },
+      7: { halign: "right" },
+      8: { halign: "right" }
+    }
   });
 
   const total = eintraege.reduce((sum, entry) => sum + entry.gesamtkosten, 0);
@@ -519,4 +560,8 @@ function formatTimeOnly(value: Date): string {
     hour: "2-digit",
     minute: "2-digit"
   });
+}
+
+function formatPeakDateTime(value: Date): string {
+  return `${formatDateOnly(value)} ${formatTimeOnly(value)}`;
 }

@@ -1,11 +1,12 @@
 ﻿import { useRef, useState, type ChangeEvent } from "react";
 import { Menu } from "lucide-react";
 import type { EinsatzEintrag, Metadaten } from "../types/einsatz";
-import { downloadCsv, downloadDetailCsv, downloadJson, downloadPdf } from "../lib/export";
+import { downloadCsv, downloadDetailCsv, downloadJson, downloadPdf, type PdfSummary } from "../lib/export";
 
 interface ExportButtonsProps {
   metadaten: Metadaten;
   eintraege: EinsatzEintrag[];
+  summary: PdfSummary;
   onImportJson?: (payload: unknown) => void;
   onReset?: () => void;
   onOpenTarife?: () => void;
@@ -14,6 +15,7 @@ interface ExportButtonsProps {
 export default function ExportButtons({
   metadaten,
   eintraege,
+  summary,
   onImportJson,
   onReset,
   onOpenTarife
@@ -95,7 +97,7 @@ export default function ExportButtons({
           >
             Detail Auswertung
           </button>
-          <button type="button" onClick={() => handleExport(() => downloadPdf(metadaten, eintraege))}>
+          <button type="button" onClick={() => handleExport(() => downloadPdf(metadaten, eintraege, summary))}>
             PDF erstellen
           </button>
           {onOpenTarife ? (

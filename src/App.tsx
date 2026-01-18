@@ -252,6 +252,7 @@ export default function App() {
         <ExportButtons
           metadaten={metadaten}
           eintraege={computedEntries}
+          summary={summary}
           onImportJson={handleImportJson}
           onReset={handleReset}
           onOpenTarife={() => setTarifDialogOpen(true)}

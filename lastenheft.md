@@ -81,7 +81,7 @@ nach dem Sicherheitspolizeigesetz.
 
 | Feldname | Typ | Standardwert | Beschreibung | Position |
 |----------|-----|--------------|--------------|----------|
-| Tarifmodell | Select | Standard | Auswahl: Standard / Oeffentl. Gesundheitsinteresse (mit Erwerbsinteresse) / Oeffentl. Gesundheitsinteresse (ohne Erwerbsinteresse) | Rechts oben |
+| Tarifmodell | Select | Oeffentl. Gesundheitsinteresse (mit Erwerbsinteresse) | Auswahl: Standard / Oeffentl. Gesundheitsinteresse (mit Erwerbsinteresse) / Oeffentl. Gesundheitsinteresse (ohne Erwerbsinteresse) | Rechts oben |
 | Personal Tarif 1 | Read-only | 17,00 EUR | Pro halbe Stunde (06:00-22:00, Werktage); Wert aus Tarif-Dialog | Rechts oben |
 | Personal Tarif 2 | Read-only | 26,00 EUR | Pro halbe Stunde (22:00-06:00 oder So/Feiertag); Wert aus Tarif-Dialog | Rechts oben |
 | Dienstfahrzeug | Read-only | 13,00 EUR | Pro halbe Stunde (zusaetzlich); Wert aus Tarif-Dialog | Rechts oben |
@@ -160,12 +160,19 @@ nach dem Sicherheitspolizeigesetz.
 - **Schliessen/Abbrechen**: Dialog schliessen
 - **Entwurf**: Auto-Save in localStorage (sgv-draft)
 
+#### 3.2.4 Letzte Eingabe merken
+- Nach dem Speichern eines **neuen** Eintrags werden die Eingaben (Art der Kraefte, Anzahl, Datum, Beginn, Ende) in localStorage gespeichert (sgv-last-input)
+- Beim erneuten Oeffnen des Dialogs werden diese Werte als Vorbelegung verwendet
+- Die **Bezeichnung** wird bewusst nicht uebernommen (bleibt leer fuer neue Eintraege)
+- Die gemerkten Eingaben werden beim **Laden** oder **Zuruecksetzen** des Formulars geloescht
+
 ### 3.3 Einsatztabelle
 
 #### 3.3.1 Darstellung
 - Responsive HTML-Tabelle mit allen Spalten aus dem Formular
 - Tagging: Tarif-2-Werte als Badge, Luftfahrzeug als eigener Tag
 - Sortierbar per Klick auf Spaltenkoepfe (Bezeichnung, Art, Anzahl, Datum, Beginn, Ende, Kosten)
+- **Rechtsbuendige Spalten**: Anzahl, Halbstunden T1, Halbstunden T2, Kosten
 - Keine Filterfunktion im Ist-Stand
 - Auf schmalen Bildschirmen: Kartenansicht pro Eintrag (Label/Wert)
 
@@ -215,6 +222,14 @@ Die Exportfunktionen sind im oberen Menue gebuendelt; die Tabelle zeigt nur Date
 
 ### 3.4 Export-Funktionalitaet
 
+#### 3.4.0 Speichern-unter-Dialog (File System Access API)
+- Alle Export-Funktionen (JSON, CSV, PDF) nutzen die **File System Access API** (`showSaveFilePicker`)
+- Oeffnet einen nativen "Speichern unter"-Dialog zur Auswahl von Dateiname und Speicherort
+- **Browser-Unterstuetzung**:
+  - Chrome, Edge, Opera: Vollstaendig unterstuetzt
+  - Firefox, Safari: Fallback auf klassischen Download ins Download-Verzeichnis
+- Vorgeschlagene Dateinamen: `sgv-export-YYYY-MM-DD.{json|csv|pdf}` bzw. `sgv-detail-YYYY-MM-DD.csv`
+
 #### 3.4.1 CSV-Export
 - **Einsatzdaten-Block** (erste Zeilen):
   - Dienststelle, Veranstaltung, Verein, Bescheid-Zahl, PAD-Zahl
@@ -259,15 +274,23 @@ Summe verrechenbar (SGV);;;;;;;;;;2.500,00;EUR
 
 #### 3.4.2 PDF-Export
 - Querformat (bessere Spaltenbreite)
-- **Kopfbereich**:
+- **Kopfbereich** (kompaktes Layout):
   - Ueberschrift "Berechnungsblatt fuer Ueberwachungsgebuehren"
-  - Einsatzdaten: Dienststelle, Veranstaltung, Verein, Bescheid-Zahl, PAD-Zahl
-  - Tarife: Tarifmodell, Personal T1/T2, Dienstfahrzeug, Luftfahrzeug pro Minute, Durchschn. Stundensatz
-  - Allgemeine Einsatzzeit: Von/Bis, Eingesetzte Bedienstete
+  - Zeile 1: `Dienststelle: X | Veranstaltung: X | Verein: X`
+  - Zeile 2: `Bescheid Zahl: X, PAD Zahl: X`
+  - Zeile 3: `Tarifmodell: X | Tarife (pro 30 Min): P1 X | P2 X | Fahrzeug X | Luft/min X | Std X`
+  - Zeile 4: `Allgem. Einsatzzeit: DD.MM.YYYY HH:MM - DD.MM.YYYY HH:MM | Eingesetzte Bedienstete: X`
+  - Zeile 5: `Tatsaechliche Kosten: Einsatzstunden X,XX Std | X.XXX,XX EUR (Stunden * Bedienstete * Stundensatz)`
+  - Zeile 6: `Verrechnete Kosten: [nur Kategorien > 0] | Spitzen-Personaleinsatz: X am DD.MM.YYYY HH:MM`
 - **Hauptteil**: Tabelle mit Einsatzdaten
+  - **Rechtsbuendige Spalten**: Anzahl, Halbstunden T1, Halbstunden T2, Kosten
 - **Fussbereich**:
   - Summe verrechenbar (SGV)
   - Exportdatum (Locale de-AT)
+
+**Verrechnete Kosten - bedingte Anzeige:**
+- Kategorien (Personal, Fahrzeuge, Luftfahrzeug) werden nur angezeigt, wenn Halbstunden/Minuten > 0
+- Beispiel bei nur Personal: `Verrechnete Kosten: Personal 44 Halbstunden (2.431,00 EUR) | Spitzen-Personaleinsatz: 30 am 08.11.2025 14:00`
 
 #### 3.4.3 JSON-Export/Import
 - Export erzeugt eine JSON-Datei mit `version`, `exportedAt`, `metadaten`, `eintraege`
@@ -652,9 +675,15 @@ interface EinsatzState {
   "sgv-metadaten": Metadaten,
   "sgv-eintraege": EinsatzEintrag[],
   "sgv-draft": Partial<EinsatzEintrag>,
-  "sgv-tarif-config": TarifKonfiguration
+  "sgv-tarif-config": TarifKonfiguration,
+  "sgv-last-input": Partial<EinsatzEintrag>  // Letzte Eingabe fuer Vorbelegung
 }
 ```
+
+**Hinweis zu sgv-last-input:**
+- Speichert die zuletzt eingegebenen Werte (artDerKraefte, anzahl, datum, beginn, ende)
+- Wird beim Speichern eines **neuen** Eintrags aktualisiert (nicht beim Bearbeiten)
+- Wird beim Laden oder Zuruecksetzen des Formulars geloescht
 
 ---
 
@@ -827,6 +856,9 @@ abrechnungweb/
 - Luftfahrzeug: Abrechnung pro Minute, keine Zeitscheiben
 - Tarife kommen aus dem Tarif-Dialog; Einsatzdaten zeigen nur Anzeige; Tarifmodell bestimmt die Auswahl
 - Durchschn. Stundensatz bezieht sich auf 1 Stunde
+- Default-Tarifkategorie: "gesundheit" (Oeffentl. Gesundheitsinteresse mit Erwerbsinteresse)
+- Letzte Eingabe wird fuer neue Eintraege vorbelegt (sgv-last-input)
+- Export nutzt File System Access API mit Fallback fuer aeltere Browser
 
 ---
 
@@ -869,9 +901,18 @@ Diese Features sind NICHT Teil des ersten Releases, können aber später ergänz
 
 ---
 
-**Erstellt am**: 2026-01-17  
-**Version**: 1.1  
+**Erstellt am**: 2026-01-17
+**Aktualisiert am**: 2026-01-18
+**Version**: 1.2
 **Autor**: Bundespolizei Vorarlberg
+
+**Aenderungen in Version 1.2:**
+- Default-Tarifkategorie auf "Oeffentl. Gesundheitsinteresse (mit Erwerbsinteresse)" geaendert
+- Letzte Eingabe merken: Vorbelegung beim erneuten Oeffnen des Dialogs
+- Speichern-unter-Dialog (File System Access API) fuer alle Exporte
+- Rechtsbuendige Spalten in Tabelle und PDF (Anzahl, T1, T2, Kosten)
+- Kompaktes PDF-Layout mit Tatsaechlichen/Verrechneten Kosten
+- Bedingte Anzeige der Kostenkategorien im PDF (nur wenn > 0)
 
 ---
 

@@ -110,7 +110,7 @@ export default function EinsatzTabelle({
               <th onClick={() => onSortChange("artDerKraefte")} aria-sort={ariaSortFor("artDerKraefte")}>
                 Art
               </th>
-              <th onClick={() => onSortChange("anzahl")} aria-sort={ariaSortFor("anzahl")}>
+              <th onClick={() => onSortChange("anzahl")} aria-sort={ariaSortFor("anzahl")} className="text-right">
                 Anzahl
               </th>
               <th onClick={() => onSortChange("datum")} aria-sort={ariaSortFor("datum")}>
@@ -122,9 +122,9 @@ export default function EinsatzTabelle({
               <th onClick={() => onSortChange("ende")} aria-sort={ariaSortFor("ende")}>
                 Ende
               </th>
-              <th>T1</th>
-              <th>T2</th>
-              <th onClick={() => onSortChange("gesamtkosten")} aria-sort={ariaSortFor("gesamtkosten")}>
+              <th className="text-right">T1</th>
+              <th className="text-right">T2</th>
+              <th onClick={() => onSortChange("gesamtkosten")} aria-sort={ariaSortFor("gesamtkosten")} className="text-right">
                 Kosten
               </th>
               <th>Aktionen</th>
@@ -150,19 +150,19 @@ export default function EinsatzTabelle({
                       {entry.artDerKraefte}
                     </span>
                   </td>
-                  <td>{entry.anzahl}</td>
+                  <td className="text-right">{entry.anzahl}</td>
                   <td>{formatDate(entry.datum)}</td>
                   <td>{formatTime(entry.beginn)}</td>
                   <td>{formatTime(entry.ende)}</td>
-                  <td>{entry.zeitscheibenTarif1}</td>
-                  <td>
+                  <td className="text-right">{entry.zeitscheibenTarif1}</td>
+                  <td className="text-right">
                     {entry.zeitscheibenTarif2 > 0 ? (
                       <span className="tag tarif2">{entry.zeitscheibenTarif2}</span>
                     ) : (
                       entry.zeitscheibenTarif2
                     )}
                   </td>
-                  <td>{formatCurrency(entry.gesamtkosten)}</td>
+                  <td className="text-right">{formatCurrency(entry.gesamtkosten)}</td>
                   <td>
                     <div className="table-row-actions">
                       <button

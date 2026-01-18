@@ -262,6 +262,11 @@ button:hover:not(:disabled) {
   font-weight: 700;
 }
 
+.table th.text-right,
+.table td.text-right {
+  text-align: right;
+}
+
 .table-header {
   display: flex;
   align-items: center;
