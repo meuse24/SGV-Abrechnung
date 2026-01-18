@@ -136,19 +136,33 @@ export function buildDetailCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]
   return `\uFEFF${lines.join("\r\n")}`;
 }
 
-export function downloadCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
+export async function downloadCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
   const csv = buildCsv(metadaten, eintraege);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  triggerDownload(blob, `sgv-export-${new Date().toISOString().slice(0, 10)}.csv`);
+  await saveFile(blob, `sgv-export-${new Date().toISOString().slice(0, 10)}.csv`, {
+    types: [
+      {
+        description: "CSV-Datei",
+        accept: { "text/csv": [".csv"] }
+      }
+    ]
+  });
 }
 
-export function downloadDetailCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
+export async function downloadDetailCsv(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
   const csv = buildDetailCsv(metadaten, eintraege);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  triggerDownload(blob, `sgv-detail-${new Date().toISOString().slice(0, 10)}.csv`);
+  await saveFile(blob, `sgv-detail-${new Date().toISOString().slice(0, 10)}.csv`, {
+    types: [
+      {
+        description: "CSV-Datei",
+        accept: { "text/csv": [".csv"] }
+      }
+    ]
+  });
 }
 
-export function downloadJson(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
+export async function downloadJson(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
   const payload = {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -157,7 +171,14 @@ export function downloadJson(metadaten: Metadaten, eintraege: EinsatzEintrag[]) 
   };
   const json = JSON.stringify(payload, null, 2);
   const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-  triggerDownload(blob, `sgv-export-${new Date().toISOString().slice(0, 10)}.json`);
+  await saveFile(blob, `sgv-export-${new Date().toISOString().slice(0, 10)}.json`, {
+    types: [
+      {
+        description: "JSON-Datei",
+        accept: { "application/json": [".json"] }
+      }
+    ]
+  });
 }
 
 export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintrag[]) {
@@ -259,7 +280,15 @@ export async function downloadPdf(metadaten: Metadaten, eintraege: EinsatzEintra
     finalY + 8
   );
 
-  doc.save(`sgv-export-${new Date().toISOString().slice(0, 10)}.pdf`);
+  const pdfBlob = doc.output("blob");
+  await saveFile(pdfBlob, `sgv-export-${new Date().toISOString().slice(0, 10)}.pdf`, {
+    types: [
+      {
+        description: "PDF-Datei",
+        accept: { "application/pdf": [".pdf"] }
+      }
+    ]
+  });
 }
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -273,6 +302,52 @@ function triggerDownload(blob: Blob, filename: string) {
   window.setTimeout(() => {
     window.URL.revokeObjectURL(url);
   }, 1000);
+}
+
+interface FilePickerOptions {
+  suggestedName?: string;
+  types?: Array<{
+    description: string;
+    accept: Record<string, string[]>;
+  }>;
+}
+
+async function saveWithFilePicker(
+  blob: Blob,
+  filename: string,
+  options: FilePickerOptions
+): Promise<boolean> {
+  if (!("showSaveFilePicker" in window)) {
+    return false;
+  }
+  try {
+    const handle = await (window as unknown as {
+      showSaveFilePicker: (opts: FilePickerOptions) => Promise<FileSystemFileHandle>;
+    }).showSaveFilePicker({
+      suggestedName: filename,
+      ...options
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return true;
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return true;
+    }
+    return false;
+  }
+}
+
+async function saveFile(
+  blob: Blob,
+  filename: string,
+  options: FilePickerOptions
+): Promise<void> {
+  const saved = await saveWithFilePicker(blob, filename, options);
+  if (!saved) {
+    triggerDownload(blob, filename);
+  }
 }
 
 function formatTarifKategorie(value: string): string {

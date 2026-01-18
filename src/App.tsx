@@ -62,6 +62,9 @@ export default function App() {
     clearEintraege,
     draft,
     setDraft,
+    lastInput,
+    setLastInput,
+    clearLastInput,
     tarifConfig,
     setTarifConfig,
     setTarifKategorie,
@@ -168,6 +171,9 @@ export default function App() {
     };
 
     upsertEintrag(entry);
+    if (!editing) {
+      setLastInput(values);
+    }
     setEditing(null);
     setDraft(EMPTY_DRAFT);
     setDialogOpen(false);
@@ -182,6 +188,7 @@ export default function App() {
     setMetadaten(parsed.data.metadaten);
     setEintraege(parsed.data.eintraege as EinsatzEintrag[]);
     setDraft(EMPTY_DRAFT);
+    clearLastInput();
     setEditing(null);
     setDialogOpen(false);
   };
@@ -198,6 +205,7 @@ export default function App() {
     setMetadaten(createDefaultMetadaten());
     setEintraege([]);
     setDraft(EMPTY_DRAFT);
+    clearLastInput();
     setEditing(null);
     setDialogOpen(false);
   };
@@ -229,12 +237,14 @@ export default function App() {
       return editing;
     }
     return {
-      ...draft,
-      datum: draft.datum || prefillFromEinsatzzeit.datum || "",
-      beginn: draft.beginn || prefillFromEinsatzzeit.beginn || "",
-      ende: draft.ende || prefillFromEinsatzzeit.ende || ""
+      bezeichnung: draft.bezeichnung || "",
+      artDerKraefte: draft.artDerKraefte || lastInput.artDerKraefte || "Personal",
+      anzahl: draft.anzahl ?? lastInput.anzahl ?? 1,
+      datum: draft.datum || lastInput.datum || prefillFromEinsatzzeit.datum || "",
+      beginn: draft.beginn || lastInput.beginn || prefillFromEinsatzzeit.beginn || "",
+      ende: draft.ende || lastInput.ende || prefillFromEinsatzzeit.ende || ""
     };
-  }, [draft, editing, prefillFromEinsatzzeit]);
+  }, [draft, editing, lastInput, prefillFromEinsatzzeit]);
 
   return (
     <main>

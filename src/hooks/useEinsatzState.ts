@@ -9,7 +9,7 @@ import type {
 } from "../types/einsatz";
 import { useLocalStorage } from "./useLocalStorage";
 
-const DEFAULT_TARIFKATEGORIE: TarifKategorie = "standard";
+const DEFAULT_TARIFKATEGORIE: TarifKategorie = "gesundheit";
 
 export function createDefaultMetadaten(): Metadaten {
   const tarife = buildTarife(DEFAULT_TARIFKONFIG, DEFAULT_TARIFKATEGORIE, DEFAULT_DURCHSCHN_STUNDENSATZ);
@@ -32,8 +32,6 @@ export function createDefaultMetadaten(): Metadaten {
 export function createDefaultDraft(): Partial<EinsatzEintrag> {
   return {
     bezeichnung: "",
-    artDerKraefte: "Personal",
-    anzahl: 1,
     datum: "",
     beginn: "",
     ende: ""
@@ -43,6 +41,7 @@ export function createDefaultDraft(): Partial<EinsatzEintrag> {
 const DEFAULT_METADATEN = createDefaultMetadaten();
 const DEFAULT_DRAFT = createDefaultDraft();
 const TARIFCONFIG_STORAGE_KEY = "sgv-tarif-config";
+const LAST_INPUT_STORAGE_KEY = "sgv-last-input";
 
 export function useEinsatzState() {
   const [metadaten, setMetadaten] = useLocalStorage<Metadaten>(
@@ -51,6 +50,10 @@ export function useEinsatzState() {
   );
   const [eintraege, setEintraege] = useLocalStorage<EinsatzEintrag[]>("sgv-eintraege", []);
   const [draft, setDraft] = useLocalStorage<Partial<EinsatzEintrag>>("sgv-draft", DEFAULT_DRAFT);
+  const [lastInput, setLastInput] = useLocalStorage<Partial<EinsatzEintrag>>(
+    LAST_INPUT_STORAGE_KEY,
+    DEFAULT_DRAFT
+  );
   const [tarifConfig, setTarifConfig] = useState<TarifKonfiguration>(() => {
     if (typeof window === "undefined") {
       return DEFAULT_TARIFKONFIG;
@@ -183,6 +186,10 @@ export function useEinsatzState() {
     setEintraege([]);
   }, [setEintraege]);
 
+  const clearLastInput = useCallback(() => {
+    setLastInput(DEFAULT_DRAFT);
+  }, [setLastInput]);
+
   return {
     metadaten,
     setMetadaten,
@@ -193,6 +200,9 @@ export function useEinsatzState() {
     clearEintraege,
     draft,
     setDraft,
+    lastInput,
+    setLastInput,
+    clearLastInput,
     tarifConfig,
     setTarifConfig,
     setTarifKategorie,
