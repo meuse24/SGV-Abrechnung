@@ -1,4 +1,4 @@
-﻿import { useRef, useState, type ChangeEvent } from "react";
+﻿import { useRef, useState, useEffect, type ChangeEvent } from "react";
 import { Menu } from "lucide-react";
 import type { EinsatzEintrag, Metadaten } from "../types/einsatz";
 import { downloadCsv, downloadDetailCsv, downloadJson, downloadPdf, type PdfSummary } from "../lib/export";
@@ -22,9 +22,50 @@ export default function ExportButtons({
 }: ExportButtonsProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const menuRef = useRef<HTMLDetailsElement | null>(null);
+  const dinoIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [dinoOpen, setDinoOpen] = useState(false);
   const year = new Date().getFullYear();
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && dinoOpen) {
+        setDinoOpen(false);
+      }
+    };
+
+    if (dinoOpen) {
+      window.addEventListener('keydown', handleEscape);
+      return () => window.removeEventListener('keydown', handleEscape);
+    }
+  }, [dinoOpen]);
+
+  useEffect(() => {
+    if (dinoOpen && dinoIframeRef.current) {
+      // Focus the iframe after a short delay to ensure it's rendered
+      const timer = setTimeout(() => {
+        dinoIframeRef.current?.focus();
+        // Try to focus the content window as well
+        try {
+          dinoIframeRef.current?.contentWindow?.focus();
+        } catch (e) {
+          // Ignore cross-origin errors
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [dinoOpen]);
+
+  useEffect(() => {
+    // Prevent background scrolling when dino overlay is open
+    if (dinoOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [dinoOpen]);
 
   const closeMenu = () => {
     if (menuRef.current) {
@@ -124,6 +165,17 @@ export default function ExportButtons({
             }}
           >
             Info
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setDinoOpen(true);
+              setInfoOpen(false);
+              setHelpOpen(false);
+              closeMenu();
+            }}
+          >
+            Dino Pause
           </button>
         </div>
       </details>
@@ -244,6 +296,51 @@ export default function ExportButtons({
               <span>Stand: {year}</span>
               <button type="button" className="secondary info-close" onClick={() => setHelpOpen(false)}>
                 Schlie&szlig;en
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {dinoOpen ? (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setDinoOpen(false);
+            }
+          }}
+        >
+          <div className="modal-card dino-game-card">
+            <div className="dino-game-header">
+              <h2 className="info-title">Dino Pause</h2>
+              <p className="info-subtitle">
+                Drücken Sie die Leertaste oder tippen Sie, um zu springen!
+              </p>
+            </div>
+
+            <div className="dino-game-container">
+              <iframe
+                ref={dinoIframeRef}
+                key={dinoOpen ? Date.now() : 'closed'}
+                src="/dino/index.html"
+                title="Dino Game"
+                className="dino-game-iframe"
+                sandbox="allow-scripts allow-same-origin"
+                tabIndex={0}
+              />
+            </div>
+
+            <div className="info-footer">
+              <span>Chrome Dino Clone</span>
+              <button
+                type="button"
+                className="secondary info-close"
+                onClick={() => setDinoOpen(false)}
+              >
+                Schließen
               </button>
             </div>
           </div>

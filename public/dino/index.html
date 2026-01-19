@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Dino Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dino-sky: #c5ebff;
+            --dino-grass: #ecf8e6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dino-sky);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 0;
+            height: auto;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #main-content {
+            position: relative;
+            width: 600px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .icon-offline {
+            margin: 0 auto 20px;
+            width: 72px;
+            height: 72px;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzIiIGhlaWdodD0iNzIiIHZpZXdCb3g9IjAgMCA3MiA3MiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgPHBhdGggZD0iTTM2IDcyYzE5Ljg4MiAwIDM2LTE2LjExOCAzNi0zNlM1NS44ODIgMCAzNiAwIDAgMTYuMTE4IDAgMzZzMTYuMTE4IDM2IDM2IDM2eiIgZmlsbD0iI0U4RUFFRCIvPgogICAgPHBhdGggZD0iTTM2IDcyYzE5Ljg4MiAwIDM2LTE2LjExOCAzNi0zNlM1NS44ODIgMCAzNiAwIiBzdHJva2U9IiM5QUEwQTYiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHBhdGggZD0iTTQyIDI3YTYgNiAwIDEgMC0xMiAwIDYgNiAwIDAgMCAxMiAwIiBmaWxsPSIjOUFBMEE2Ii8+CiAgICA8cGF0aCBkPSJNMzYgNTRjLTYuNjI3IDAtMTItNS4zNzMtMTItMTJoMjRjMCA2LjYyNy01LjM3MyAxMi0xMiAxMnoiIGZpbGw9IiM5QUEwQTYiLz4KICA8L2c+Cjwvc3ZnPgo=');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+        }
+
+        .icon-disabled {
+            opacity: 0.3;
+        }
+
+        .runner-container {
+            position: relative;
+            max-width: 600px;
+            height: 150px;
+            margin: 0 auto;
+            overflow: hidden;
+            background: linear-gradient(
+                to bottom,
+                var(--dino-sky) 0%,
+                var(--dino-sky) 84%,
+                var(--dino-grass) 84%,
+                var(--dino-grass) 100%
+            );
+            border: 1px solid #ddd;
+        }
+
+        .runner-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+        }
+
+        .controller {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            background: transparent;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .offline-runner-live-region {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .inverted {
+            filter: invert(1);
+        }
+
+        .arcade-mode .runner-container {
+            border: 3px solid #000;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        #offline-resources {
+            display: none;
+        }
+
+        .snackbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #323232;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .snackbar-show {
+            opacity: 1;
+        }
+
+        /* Accessibility */
+        .offline-ui-container {
+            position: relative;
+        }
+
+        [role="button"] {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-content">
+        <div class="icon icon-offline"></div>
+        <div id="offline-resources"></div>
+
+        <!-- Audio template (empty - uses Web Audio API fallback) -->
+        <template id="audio-resources">
+        </template>
+    </div>
+
+    <!-- Sprite definitions will be injected here -->
+    <img id="offline-resources-1x" class="hidden" alt=""
+         src="sprites/sprite-1x.png">
+    <img id="offline-resources-2x" class="hidden" alt=""
+         src="sprites/sprite-2x.png">
+
+    <!-- Game module -->
+    <script type="module">
+        import { Runner } from './src/core/runner.js';
+
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            const sprite1x = document.getElementById('offline-resources-1x');
+            const sprite2x = document.getElementById('offline-resources-2x');
+
+            const initGame = () => {
+                try {
+                    Runner.initializeInstance('#main-content');
+                } catch (error) {
+                    console.error('Failed to initialize game:', error);
+                    document.body.innerHTML += `<div style="color: red; padding: 20px; background: white; margin: 20px;">
+                        <h2>Game Initialization Error</h2>
+                        <pre>${error.message}\n${error.stack}</pre>
+                    </div>`;
+                }
+            };
+
+            // Check if both sprites are loaded
+            if (sprite1x?.complete && sprite2x?.complete) {
+                initGame();
+            } else {
+                let loaded = 0;
+                const onLoad = () => {
+                    loaded++;
+                    if (loaded === 2) {
+                        initGame();
+                    }
+                };
+                sprite1x?.addEventListener('load', onLoad);
+                sprite2x?.addEventListener('load', onLoad);
+            }
+        });
+    </script>
+
+    <!-- Screen reader announcements -->
+    <div role="status" aria-live="polite" aria-atomic="true" class="hidden"></div>
+</body>
+</html>
