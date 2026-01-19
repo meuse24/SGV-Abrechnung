@@ -162,6 +162,11 @@ export default function MetadatenFormular({
             value={metadaten.dienststelle}
             maxLength={50}
             onChange={(event) => updateField("dienststelle", event.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-ms-editor="false"
           />
         </div>
         <div>
@@ -171,6 +176,11 @@ export default function MetadatenFormular({
             value={metadaten.veranstaltung}
             maxLength={200}
             onChange={(event) => updateField("veranstaltung", event.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-ms-editor="false"
           />
         </div>
         <div>
@@ -180,6 +190,11 @@ export default function MetadatenFormular({
             value={metadaten.vereinVeranstalter}
             maxLength={100}
             onChange={(event) => updateField("vereinVeranstalter", event.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-ms-editor="false"
           />
         </div>
         <div>
@@ -189,6 +204,11 @@ export default function MetadatenFormular({
             value={metadaten.bescheidZahl ?? ""}
             maxLength={50}
             onChange={(event) => updateField("bescheidZahl", event.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-ms-editor="false"
           />
         </div>
         <div>
@@ -198,6 +218,11 @@ export default function MetadatenFormular({
             value={metadaten.padZahl ?? ""}
             maxLength={50}
             onChange={(event) => updateField("padZahl", event.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-ms-editor="false"
           />
         </div>
       </div>
@@ -227,6 +252,8 @@ export default function MetadatenFormular({
             onChange={(event) =>
               updateEinsatzzeit("eingesetzteBedienstete", handleNumberChange(event))
             }
+            autoComplete="off"
+            data-ms-editor="false"
           />
         </div>
         <div className="metadata-summary-line">
@@ -285,6 +312,8 @@ export default function MetadatenFormular({
             value={metadaten.tarife.durchschnStundensatz}
             step="0.1"
             onChange={(event) => updateTarif("durchschnStundensatz", handleNumberChange(event))}
+            autoComplete="off"
+            data-ms-editor="false"
           />
         </div>
       </div>
@@ -329,6 +358,8 @@ export default function MetadatenFormular({
                             handleNumberChange(event)
                           )
                         }
+                        autoComplete="off"
+                        data-ms-editor="false"
                       />
                     </td>
                     <td>
@@ -343,6 +374,8 @@ export default function MetadatenFormular({
                             handleNumberChange(event)
                           )
                         }
+                        autoComplete="off"
+                        data-ms-editor="false"
                       />
                     </td>
                   </tr>
@@ -360,6 +393,8 @@ export default function MetadatenFormular({
                             handleNumberChange(event)
                           )
                         }
+                        autoComplete="off"
+                        data-ms-editor="false"
                       />
                     </td>
                     <td>
@@ -374,6 +409,8 @@ export default function MetadatenFormular({
                             handleNumberChange(event)
                           )
                         }
+                        autoComplete="off"
+                        data-ms-editor="false"
                       />
                     </td>
                   </tr>
@@ -391,6 +428,8 @@ export default function MetadatenFormular({
                             handleNumberChange(event)
                           )
                         }
+                        autoComplete="off"
+                        data-ms-editor="false"
                       />
                     </td>
                     <td>
@@ -405,6 +444,8 @@ export default function MetadatenFormular({
                             handleNumberChange(event)
                           )
                         }
+                        autoComplete="off"
+                        data-ms-editor="false"
                       />
                     </td>
                   </tr>
@@ -432,6 +473,8 @@ export default function MetadatenFormular({
                         onChange={(event) =>
                           updateTarifKonfigZusatz("dienstfahrzeug", handleNumberChange(event))
                         }
+                        autoComplete="off"
+                        data-ms-editor="false"
                       />
                     </td>
                   </tr>
@@ -445,6 +488,8 @@ export default function MetadatenFormular({
                         onChange={(event) =>
                           updateTarifKonfigZusatz("luftfahrzeugProMinute", handleNumberChange(event))
                         }
+                        autoComplete="off"
+                        data-ms-editor="false"
                       />
                     </td>
                   </tr>

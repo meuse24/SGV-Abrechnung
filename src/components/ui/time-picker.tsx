@@ -30,6 +30,8 @@ export default function TimePicker({
       placeholder={placeholder}
       onChange={handleChange}
       step={stepMinutes * 60}
+      autoComplete="off"
+      data-ms-editor="false"
     />
   );
 }

@@ -106,7 +106,16 @@ export default function EinsatzFormular({
         <div className="grid">
           <div>
             <label htmlFor="bezeichnung">Bezeichnung der Kr&auml;fte</label>
-            <input id="bezeichnung" {...register("bezeichnung")} maxLength={200} />
+            <input
+              id="bezeichnung"
+              {...register("bezeichnung")}
+              maxLength={200}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-ms-editor="false"
+            />
             {errors.bezeichnung && <small className="muted">{errors.bezeichnung.message}</small>}
           </div>
           <div className="grid grid-3">
@@ -126,12 +135,20 @@ export default function EinsatzFormular({
                 min={1}
                 max={999}
                 {...register("anzahl", { valueAsNumber: true })}
+                autoComplete="off"
+                data-ms-editor="false"
               />
               {errors.anzahl && <small className="muted">{errors.anzahl.message}</small>}
             </div>
             <div>
               <label htmlFor="datum">Datum</label>
-              <input id="datum" type="date" {...register("datum")} />
+              <input
+                id="datum"
+                type="date"
+                {...register("datum")}
+                autoComplete="off"
+                data-ms-editor="false"
+              />
               {errors.datum && <small className="muted">{errors.datum.message}</small>}
             </div>
           </div>

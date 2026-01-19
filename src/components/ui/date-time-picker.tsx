@@ -34,8 +34,20 @@ export default function DateTimePicker({ value, onChange }: DateTimePickerProps)
 
   return (
     <div className="date-time-picker">
-      <input type="date" value={dateValue} onChange={handleDateChange} />
-      <input type="time" value={timeValue} onChange={handleTimeChange} />
+      <input
+        type="date"
+        value={dateValue}
+        onChange={handleDateChange}
+        autoComplete="off"
+        data-ms-editor="false"
+      />
+      <input
+        type="time"
+        value={timeValue}
+        onChange={handleTimeChange}
+        autoComplete="off"
+        data-ms-editor="false"
+      />
     </div>
   );
 }
