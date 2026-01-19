@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo } from "react";
+﻿import { useEffect, useMemo, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,8 +56,16 @@ export default function EinsatzFormular({
     defaultValues: { ...DEFAULT_VALUES, ...initialValue }
   });
 
+  const editingIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    reset({ ...DEFAULT_VALUES, ...initialValue });
+    // Nur reset wenn wir zu einem anderen Eintrag wechseln oder von Bearbeiten zu Neu
+    // Nicht bei jedem Tastendruck wenn draft sich ändert
+    const currentId = (initialValue as { id?: string })?.id ?? null;
+    if (editingIdRef.current !== currentId) {
+      editingIdRef.current = currentId;
+      reset({ ...DEFAULT_VALUES, ...initialValue });
+    }
   }, [initialValue, reset]);
 
   useEffect(() => {
